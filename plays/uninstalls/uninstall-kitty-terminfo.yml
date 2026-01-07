@@ -1,9 +1,9 @@
 ---
-- name: "Install kitty-terminfo package"
+- name: "Uninstall kitty-terminfo package"
   hosts: all
 
   vars:
-    packages_to_install: ["kitty-terminfo"]
+    packages_to_uninstall: ["kitty-terminfo"]
 
   tasks:
     - name: "Gather facts"
@@ -13,4 +13,4 @@
     - name: "Install kitty-terminfo"
       ansible.builtin.import_role:
         name: my.homelab.package_manager
-        tasks_from: install-packages.yml
+        tasks_from: uninstall-packages.yml
