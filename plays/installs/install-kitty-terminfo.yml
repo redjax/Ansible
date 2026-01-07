@@ -1,0 +1,15 @@
+---
+- name: "Install kitty-terminfo package"
+  hosts: all
+
+  vars:
+    packages: ["kitty-terminfo"]
+
+  tasks:
+    - name: "Gather facts"
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: "Install kitty-terminfo"
+      ansible.builtin.import_role:
+        name: my.homelab.package_installer
