@@ -1,0 +1,10 @@
+---
+- name: Uninstall specified packages
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ packages_to_uninstall }}"
+  loop_control:
+    label: "{{ item }}"
+  when: packages | length > 0
+  become: true
