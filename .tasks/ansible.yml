@@ -3,13 +3,13 @@
 version: "3"
 
 vars:
-  ANSIBLE_REQUIREMENTS: '.config/ansible/requirements.yml'
-  ANSIBLE_REQUIREMENTS_PRIVATE: '.config/ansible/requirements.private.yml'
+  ANSIBLE_REQUIREMENTS: ".config/ansible/requirements.yml"
+  ANSIBLE_REQUIREMENTS_PRIVATE: ".config/ansible/requirements.private.yml"
   ANSIBLE_PING_HOST: '{{default "all" .CLI_ARGS}}'
   ANSIBLE_UPDATE_HOST: '{{default "autoReboot" .CLI_ARGS}}'
-  ANSIBLE_ONBOARD_INVENTORY: 'inventories/onboard/inventory.yml'
+  ANSIBLE_ONBOARD_INVENTORY: "inventories/onboard/inventory.yml"
   ANSIBLE_ONBOARD_HOST: '{{default "" .CLI_ARGS}}'
-  ANSIBLE_INVENTORY: 'inventories/homelab/inventory.yml'
+  ANSIBLE_INVENTORY: "inventories/homelab/inventory.yml"
 
 tasks:
   galaxy-requirements:
@@ -35,3 +35,13 @@ tasks:
     desc: "Run onboarding playbook (requires a --limit value, i.e. 'hostname' or 'groupname' or 'hostname1 hostsname2 hostname3')"
     cmds:
       - cmd: ansible-playbook -i {{.ANSIBLE_INVENTORY}} {{if .ANSIBLE_ONBOARD_HOST}}--limit {{.ANSIBLE_ONBOARD_HOST}}{{end}} plays/onboard/run-onboarding.yml
+
+  init-role:
+    desc: "Initialize a new role with Ansible Galaxy"
+    vars:
+      COLLECTION_PATH: ansible_collections/my/homelab
+      COLLECTION_ROLES_PATH: "{{.COLLECTION_PATH}}/roles"
+      PARENT_DIR: "{{.COLLECTION_ROLES_PATH}}/$(dirname {{.ROLE_PATH}})"
+    cmds:
+      - cmd: mkdir -p "{{.PARENT_DIR}}"
+      - cmd: ansible-galaxy role init "{{.ROLE_PATH}}" --init-path "{{.COLLECTION_ROLES_PATH}}"

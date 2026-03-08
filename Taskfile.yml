@@ -6,11 +6,11 @@ includes:
   debug: .tasks/debug.yml
   ansible: .tasks/ansible.yml
   mkdocs: .tasks/mkdocs.yml
-  
+
 vars:
-  ANSIBLE_REQUIREMENTS: '.config/ansible/requirements.yml'
-  ANSIBLE_PING_HOST: 'all'
-  ANSIBLE_INVENTORY: 'inventories/homelab/inventory.yml'
+  ANSIBLE_REQUIREMENTS: ".config/ansible/requirements.yml"
+  ANSIBLE_PING_HOST: "all"
+  ANSIBLE_INVENTORY: "inventories/homelab/inventory.yml"
 
 tasks:
   debug-host:
@@ -33,7 +33,7 @@ tasks:
     desc: "Update & reboot systems (default: autoReboot). Usage: task update -- <host|group>"
     cmds:
       - task: ansible:update
-  
+
   onboard:
     desc: "Run onboarding playbook (optional --limit)"
     cmds:
@@ -73,3 +73,10 @@ tasks:
     desc: "Publish MkDocs site"
     cmds:
       - task: mkdocs:publish
+
+  init:role:
+    desc: "Initialize a new Ansible role. Usage: task ansible:init:role -- role-name (or subdir_name/role-name)"
+    cmds:
+      - task: ansible:init-role
+        vars:
+          ROLE_PATH: "{{.CLI_ARGS}}"
