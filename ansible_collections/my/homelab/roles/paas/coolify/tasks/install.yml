@@ -21,9 +21,8 @@
 - name: Apply post-install overrides
   include_tasks: post-install.yml
 
-- name: Full stack deploy with new config
+- name: Start Coolify stack
   shell: |
     cd /data/coolify/source && \
-    docker compose -f docker-compose.yml -f docker-compose.prod.yml down || true && \
     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
   become: true

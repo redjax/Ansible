@@ -49,6 +49,7 @@
 - name: Update Coolify port
   replace:
     path: /data/coolify/source/docker-compose.prod.yml
+    ## Match port value mapping, i.e. $EXISTING_PORT:8080
     regexp: '"[0-9]+:8080"'
     replace: '"{{ coolify_port }}:8080"'
     backup: yes
