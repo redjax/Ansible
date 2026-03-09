@@ -25,3 +25,33 @@
     mode: "0644"
   become: true
   notify: restart coolify
+
+- name: Change Coolify port in docker-compose.prod.yml
+  replace:
+    path: /data/coolify/source/docker-compose.prod.yml
+    regexp: '"\${APP_PORT:-8000}:8080"'
+    replace: '"{{ coolify_port }}:8080"'
+    backup: yes
+  become: true
+  notify: restart coolify
+  when: coolify_port != 8000
+
+- name: Set root username
+  lineinfile:
+    path: /data/coolify/source/.env
+    regexp: "^ROOT_USERNAME="
+    line: "ROOT_USERNAME={{ coolify_root_username }}"
+    create: true
+    mode: "0644"
+  become: true
+  notify: restart coolify
+
+- name: Set root email
+  lineinfile:
+    path: /data/coolify/source/.env
+    regexp: "^ROOT_USER_EMAIL="
+    line: "ROOT_USER_EMAIL={{ coolify_root_email }}"
+    create: true
+    mode: "0644"
+  become: true
+  notify: restart coolify

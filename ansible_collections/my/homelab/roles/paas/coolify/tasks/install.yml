@@ -10,23 +10,20 @@
   become: true
   environment:
     DOCKER_POOL_FORCE_OVERRIDE: "true"
-    DOCKER_ADDRESS_POOL_BASE: "{{ coolify_docker_pool_base }}"
-    AUTOUPDATE: "{{ coolify_autoupdate | lower }}"
-    APP_PORT: "{{ coolify_port }}"
-    ROOT_USERNAME: "{{ coolify_root_username }}"
-    ROOT_USER_EMAIL: "{{ coolify_root_email }}"
   register: install_result
 
-- name: Wait for Coolify docker-compose.yml to be created
+- name: Wait for source files
   wait_for:
-    path: /data/coolify/source/docker-compose.yml
+    path: /data/coolify/source/docker-compose.prod.yml
     state: present
     timeout: 60
   become: true
-  register: compose_wait
-  retries: 12
-  delay: 5
-  until: compose_wait is succeeded
-
 - name: Apply post-install overrides
   include_tasks: post-install.yml
+
+- name: Full stack deploy with new config
+  shell: |
+    cd /data/coolify/source && \
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml down || true && \
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+  become: true
