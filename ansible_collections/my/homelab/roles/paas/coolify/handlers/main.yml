@@ -1,0 +1,9 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: restart coolify
+  shell: |
+    cd /data/coolify/source && \
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml down || true && \
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+  become: true
+  listen: restart coolify

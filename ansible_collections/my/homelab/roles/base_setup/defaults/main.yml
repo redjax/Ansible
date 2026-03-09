@@ -10,6 +10,7 @@ debian_pkgs:
     "ncdu",
     "neovim",
     "tmux",
+    "tree",
     "unzip",
     "wget",
     "zip",

@@ -1,0 +1,10 @@
+---
+- name: Nuke Coolify (nuclear version, remove all data dirs/volumes)
+  hosts: all
+
+  vars:
+    coolify_action: uninstall
+    coolify_nuke: true
+
+  roles:
+    - role: my.homelab.paas.coolify

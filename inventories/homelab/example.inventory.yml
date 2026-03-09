@@ -59,3 +59,27 @@ ubuntu:
 raspberryPi:
   hosts:
     host3:
+
+coolifyHosts:
+  hosts:
+    host3:
+      vars:
+        ## Deployment modes: production, homelab, vps
+        coolify_mode: "homelab"
+
+        ## Core settings (evaluated from coolify_mode)
+        coolify_port: 8001
+        coolify_firewall_enabled: false
+        coolify_lan_subnet: "192.168.1.0/24"
+
+        ## Post-install overrides
+        coolify_docker_pool_base: "172.20.0.0/16"
+        coolify_autoupdate: false
+
+        ## Production settings
+        coolify_root_username: "admin"
+        coolify_root_email: "admin@local.lan"
+
+        ## Homelab settings
+        coolify_homelab_domain: "coolify.local.lan"
+        coolify_homelab_skip_firewall: true

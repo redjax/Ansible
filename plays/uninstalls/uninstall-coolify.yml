@@ -1,0 +1,9 @@
+---
+- name: Uninstall Coolify (preserve data)
+  hosts: all
+
+  vars:
+    coolify_action: uninstall
+
+  roles:
+    - my.homelab.paas.coolify

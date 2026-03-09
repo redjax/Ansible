@@ -1,0 +1,9 @@
+---
+- name: Install Coolify
+  hosts: all
+
+  vars:
+    coolify_action: install
+
+  roles:
+    - role: my.homelab.paas.coolify

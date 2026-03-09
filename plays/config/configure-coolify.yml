@@ -1,0 +1,13 @@
+---
+## Configure or reconfigure a Coolify instance.
+#  Override the default vars in your inventory.
+#  Re-run this if you change the values in the
+#  inventory host's vars to reconfigure.
+- name: Configure Coolify
+  hosts: all
+
+  vars:
+    coolify_action: configure
+
+  roles:
+    - my.homelab.paas.coolify

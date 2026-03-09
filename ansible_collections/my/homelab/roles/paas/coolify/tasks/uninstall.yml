@@ -1,0 +1,54 @@
+---
+- name: Stop core Coolify containers
+  docker_container:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - coolify
+    - coolify-realtime
+    - coolify-db
+    - coolify-redis
+    - coolify-proxy
+    - coolify-sentinel
+  become: true
+  ignore_errors: true
+
+- name: Get Coolify-managed app containers
+  shell: docker ps -aq --filter "label=coolify.managed=true" 2>/dev/null || true
+  register: app_containers
+  changed_when: false
+  become: true
+
+- name: Stop and remove Coolify-managed app containers (when found)
+  docker_container:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ app_containers.stdout_lines | default([]) }}"
+  become: true
+  when: app_containers.stdout_lines | length > 0
+
+- name: Standard cleanup (default - skip data/volumes)
+  block:
+    - name: Remove coolify Docker network
+      docker_network:
+        name: coolify
+        state: absent
+      become: true
+      ignore_errors: true
+  when: not (coolify_nuke | default(false))
+
+- name: Full nuke - remove data directory
+  file:
+    path: /data/coolify
+    state: absent
+  become: true
+  when: coolify_nuke | default(false)
+
+- name: Full nuke - remove coolify volumes
+  shell: |
+    docker volume ls -q --filter label=coolify.managed=true 2>/dev/null | \
+    xargs -r docker volume rm -f || true && \
+    docker volume ls -q | grep coolify | \
+    xargs -r docker volume rm -f || true
+  become: true
+  when: coolify_nuke | default(false)

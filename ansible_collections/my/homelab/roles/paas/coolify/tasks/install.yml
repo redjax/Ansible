@@ -1,0 +1,28 @@
+---
+- name: Install prerequisites
+  package:
+    name: curl
+    state: present
+  become: true
+
+- name: Run Coolify installer
+  shell: curl -fsSL https://cdn.coolify.io/install.sh | bash
+  become: true
+  environment:
+    DOCKER_POOL_FORCE_OVERRIDE: "true"
+  register: install_result
+
+- name: Wait for source files
+  wait_for:
+    path: /data/coolify/source/docker-compose.prod.yml
+    state: present
+    timeout: 60
+  become: true
+- name: Apply post-install overrides
+  include_tasks: post-install.yml
+
+- name: Start Coolify stack
+  shell: |
+    cd /data/coolify/source && \
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+  become: true

@@ -1,0 +1,57 @@
+---
+- name: Ensure Coolify source directory exists
+  file:
+    path: /data/coolify/source
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Update Docker networking
+  lineinfile:
+    path: /data/coolify/source/.env
+    regexp: "^DOCKER_ADDRESS_POOL_BASE="
+    line: "DOCKER_ADDRESS_POOL_BASE={{ coolify_docker_pool_base }}"
+    create: true
+    mode: "0644"
+  become: true
+  notify: restart coolify
+
+- name: Update autoupdate setting
+  lineinfile:
+    path: /data/coolify/source/.env
+    regexp: "^AUTOUPDATE="
+    line: "AUTOUPDATE={{ coolify_autoupdate | lower }}"
+    create: true
+    mode: "0644"
+  become: true
+  notify: restart coolify
+
+- name: Update root username
+  lineinfile:
+    path: /data/coolify/source/.env
+    regexp: "^ROOT_USERNAME="
+    line: "ROOT_USERNAME={{ coolify_root_username }}"
+    create: true
+    mode: "0644"
+  become: true
+  notify: restart coolify
+
+- name: Update root email
+  lineinfile:
+    path: /data/coolify/source/.env
+    regexp: "^ROOT_USER_EMAIL="
+    line: "ROOT_USER_EMAIL={{ coolify_root_email }}"
+    create: true
+    mode: "0644"
+  become: true
+  notify: restart coolify
+
+- name: Update Coolify port
+  replace:
+    path: /data/coolify/source/docker-compose.prod.yml
+    regexp: '"[0-9]+:8080"'
+    replace: '"{{ coolify_port }}:8080"'
+    backup: yes
+  become: true
+  notify: restart coolify
+  when: coolify_port != 8000
