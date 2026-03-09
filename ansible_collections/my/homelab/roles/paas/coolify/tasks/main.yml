@@ -10,4 +10,4 @@
 
 - name: Management tasks
   include_tasks: management.yml
-  when: coolify_action | in ("update", "restart", "stop")
+  when: coolify_action in ("update", "restart", "stop")
