@@ -8,7 +8,7 @@
 
 - name: Override Docker networking
   lineinfile:
-    path: /data/coolify/.env
+    path: /data/coolify/source/.env
     regexp: "^DOCKER_ADDRESS_POOL_BASE="
     line: "DOCKER_ADDRESS_POOL_BASE={{ coolify_docker_pool_base }}"
     create: true
@@ -18,19 +18,10 @@
 
 - name: Disable autoupdate
   lineinfile:
-    path: /data/coolify/.env
+    path: /data/coolify/source/.env
     regexp: "^AUTOUPDATE="
     line: "AUTOUPDATE={{ coolify_autoupdate | lower }}"
     create: true
     mode: "0644"
   become: true
   notify: restart coolify
-
-- name: Change port (if given a port other than 8000)
-  replace:
-    path: /data/coolify/docker-compose.yml
-    regexp: '":8000"'
-    replace: '":{{ coolify_port }}"'
-  become: true
-  notify: restart coolify
-  when: coolify_port != 8000

@@ -6,15 +6,20 @@
   become: true
 
 - name: Run Coolify installer
-  shell: |
-    curl -fsSL https://cdn.coolify.io/install.sh | bash || true
+  shell: curl -fsSL https://cdn.coolify.io/install.sh | bash
   become: true
   environment:
     DOCKER_POOL_FORCE_OVERRIDE: "true"
+    DOCKER_ADDRESS_POOL_BASE: "{{ coolify_docker_pool_base }}"
+    AUTOUPDATE: "{{ coolify_autoupdate | lower }}"
+    APP_PORT: "{{ coolify_port }}"
+    ROOT_USERNAME: "{{ coolify_root_username }}"
+    ROOT_USER_EMAIL: "{{ coolify_root_email }}"
+  register: install_result
 
 - name: Wait for Coolify docker-compose.yml to be created
   wait_for:
-    path: /data/coolify/docker-compose.yml
+    path: /data/coolify/source/docker-compose.yml
     state: present
     timeout: 60
   become: true
