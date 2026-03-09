@@ -1,0 +1,39 @@
+---
+- name: Install prerequisites
+  package:
+    name:
+      - curl
+      - docker-compose
+    state: present
+  become: true
+
+- name: Check if Coolify is already installed
+  stat:
+    path: /data/coolify/docker-compose.yml
+  register: coolify_installed
+
+- name: Run official Coolify installer
+  shell: |
+    curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
+  async: 600
+  poll: 10
+  register: install_result
+  changed_when: install_result.rc == 0
+  args:
+    creates: /data/coolify/docker-compose.yml
+  when: not coolify_installed.stat.exists
+  become: true
+
+- name: Wait for Coolify healthcheck
+  uri:
+    url: "http://localhost:{{ coolify_port }}/api/health"
+    status_code: 200
+  retries: 30
+  delay: 10
+
+- name: Apply post-install overrides
+  include_tasks: post-install.yml
+
+- name: Configure firewall (conditional)
+  include_tasks: firewall.yml
+  when: coolify_firewall_enabled | bool

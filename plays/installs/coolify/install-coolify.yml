@@ -1,0 +1,15 @@
+---
+- name: Install Coolify
+  hosts: all
+
+  roles:
+    - role: ansible_collections.my.homelab.paas.coolify.coolify
+      tasks_from: install.yml
+
+  post_tasks:
+    - name: Wait for Coolify healthcheck
+      ansible.builtin.uri:
+        url: "http://localhost:{{ coolify_port | default(8000) }}/api/health"
+        status_code: 200
+        retries: 30
+        delay: 10

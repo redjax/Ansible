@@ -1,0 +1,8 @@
+---
+- name: Nuke Coolify (nuclear version, remove all data dirs/volumes)
+  hosts: all
+  vars:
+    coolify_nuke: true
+  roles:
+    - role: ansible_collections.my.homelab.paas.coolify.coolify
+      tasks_from: uninstall.yml

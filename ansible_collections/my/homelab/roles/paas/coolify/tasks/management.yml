@@ -1,0 +1,15 @@
+---
+- name: Update Coolify
+  shell: |
+    cd /data/coolify && 
+    docker compose pull && 
+    docker compose up -d
+  become: true
+
+- name: Restart Coolify
+  shell: cd /data/coolify && docker compose restart
+  become: true
+
+- name: Stop Coolify
+  shell: cd /data/coolify && docker compose down
+  become: true

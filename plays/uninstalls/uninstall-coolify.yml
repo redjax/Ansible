@@ -1,0 +1,7 @@
+---
+- name: Uninstall Coolify (preserve data)
+  hosts: all
+
+  roles:
+    - role: ansible_collections.my.homelab.paas.coolify.coolify
+      tasks_from: uninstall.yml
