@@ -1,0 +1,32 @@
+## I have an uninterrupted power supply that's failing, it will randomly
+#  start screaming at me. When this happens, there are a few machines I
+#  have to shutdown before running out of power and manually cycling the
+#  UPS to avoid data loss.
+#
+#  The simple solution would be to just buy a new UPS, but like any good
+#  nerd, I will overcomplicate the solution and use this Ansible playbook.
+---
+- name: Shutdown hosts in upsFailureHosts group
+  hosts: upsFailureHosts
+  gather_facts: no
+  become: true
+
+  tasks:
+    - name: Set playbook defaults, override with inventory values
+      ansible.builtin.set_fact:
+        _shutdown_delay: "{{ shutdown_delay | default('0') }}"
+        _shutdown_ping_retries: "{{ shutdown_ping_retries | default('60') }}"
+        _shutdown_ping_delay: "{{ shutdown_ping_delay | default('10') }}"
+
+    - name: Shut down the machine immediately
+      community.general.shutdown:
+        delay: "{{ _shutdown_delay }}"
+
+    ## Ping until host is offline
+    - name: Wait for host to go offline (bash script)
+      ansible.builtin.shell: " ./wait_host_offline.sh '{{ ansible_host }}' '{{ _shutdown_ping_timeout }}' "
+      delegate_to: localhost
+      become: false
+      args:
+        chdir: "{{ playbook_dir }}"
+      changed_when: false
