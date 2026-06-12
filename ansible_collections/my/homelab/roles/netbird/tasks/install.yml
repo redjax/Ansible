@@ -1,0 +1,60 @@
+---
+- name: Install prereqs on Debian family
+  apt:
+    name: "{{ netbird_prereq_packages }}"
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Install prereqs on RedHat family
+  package:
+    name: "{{ netbird_prereq_packages }}"
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Install prereqs on SUSE family
+  zypper:
+    name: "{{ netbird_prereq_packages }}"
+    state: present
+  when: ansible_os_family == "Suse"
+
+- name: Add NetBird repo key on Debian
+  get_url:
+    url: "{{ netbird_repo_key_url }}"
+    dest: "{{ netbird_repo_keyring }}"
+    mode: "0644"
+  when: ansible_os_family == "Debian"
+
+- name: Add NetBird apt repo on Debian
+  apt_repository:
+    repo: "{{ netbird_repo_line }}"
+    filename: netbird
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Refresh apt cache on Debian
+  apt:
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Add NetBird repo key on RedHat/SUSE
+  rpm_key:
+    key: "{{ netbird_repo_key_url }}"
+    state: present
+  when: ansible_os_family in ["RedHat", "Suse"]
+
+- name: Add NetBird repo on RedHat/SUSE
+  yum_repository:
+    name: netbird
+    description: NetBird repository
+    baseurl: "https://pkgs.netbird.io/rpm/"
+    enabled: true
+    gpgcheck: true
+    gpgkey: "{{ netbird_repo_key_url }}"
+  when: ansible_os_family in ["RedHat", "Suse"]
+
+- name: Install NetBird package
+  package:
+    name: "{{ netbird_package_name }}"
+    state: "{{ 'latest' if netbird_update_packages | bool else 'present' }}"
+  notify: restart netbird

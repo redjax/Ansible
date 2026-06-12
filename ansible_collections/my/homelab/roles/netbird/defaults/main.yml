@@ -1,3 +1,24 @@
-#SPDX-License-Identifier: MIT-0
 ---
-# defaults file for netbird
+netbird_enabled: true
+
+## client or server
+netbird_role: client
+netbird_register: true
+netbird_update_packages: true
+
+netbird_management_url: "https://vpn.example.com"
+netbird_setup_key: ""
+
+netbird_enable_peer_ssh: false
+netbird_enable_peer_ssh_root: false
+
+netbird_manage_firewall: true
+netbird_firewall_backend: auto
+
+netbird_manage_host_ssh: false
+netbird_host_ssh_port: 22
+netbird_manage_host_ssh_firewall: false
+netbird_host_ssh_allow_from_cidrs: []
+
+netbird_service_enabled: true
+netbird_service_state: started

@@ -1,0 +1,20 @@
+---
+- name: Check current NetBird status
+  command: netbird status
+  register: netbird_status
+  changed_when: false
+  failed_when: false
+
+- name: Build NetBird up command
+  set_fact:
+    netbird_up_cmd: >-
+      netbird up
+      --management-url {{ netbird_management_url }}
+      --setup-key {{ netbird_setup_key }}
+      {% if netbird_role == 'server' and netbird_enable_peer_ssh | bool %} --allow-server-ssh{% endif %}
+      {% if netbird_role == 'server' and netbird_enable_peer_ssh_root | bool %} --enable-ssh-root{% endif %}
+
+- name: Enroll machine
+  command: "{{ netbird_up_cmd }}"
+  when: netbird_status.rc != 0
+  notify: restart netbird

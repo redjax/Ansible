@@ -1,0 +1,40 @@
+---
+- name: Allow outbound NetBird traffic on Debian with ufw
+  ufw:
+    rule: allow
+    direction: out
+    port: "443"
+    proto: tcp
+  when:
+    - ansible_os_family == "Debian"
+    - netbird_firewall_backend in ["auto", "ufw"]
+
+- name: Allow host SSH port on ufw
+  ufw:
+    rule: allow
+    direction: in
+    port: "{{ netbird_host_ssh_port }}"
+    proto: tcp
+  when:
+    - ansible_os_family == "Debian"
+    - netbird_manage_host_ssh_firewall | bool
+    - netbird_firewall_backend in ["auto", "ufw"]
+
+- name: Allow host SSH port on firewalld
+  firewalld:
+    port: "{{ netbird_host_ssh_port }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled
+  when:
+    - ansible_os_family == "RedHat"
+    - netbird_manage_host_ssh_firewall | bool
+    - netbird_firewall_backend in ["auto", "firewalld"]
+
+- name: Allow host SSH port with iptables
+  command: >
+    sh -c 'iptables -C INPUT -p tcp --dport {{ netbird_host_ssh_port }} -j ACCEPT
+    || iptables -I INPUT -p tcp --dport {{ netbird_host_ssh_port }} -j ACCEPT'
+  when:
+    - netbird_manage_host_ssh_firewall | bool
+    - netbird_firewall_backend in ["auto", "iptables"]

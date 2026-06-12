@@ -1,0 +1,6 @@
+---
+- name: Ensure NetBird service enabled
+  service:
+    name: "{{ netbird_service_name }}"
+    enabled: "{{ netbird_service_enabled }}"
+    state: "{{ netbird_service_state }}"

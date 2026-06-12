@@ -1,3 +1,10 @@
-#SPDX-License-Identifier: MIT-0
 ---
-# handlers file for netbird
+- name: restart netbird
+  service:
+    name: "{{ netbird_service_name }}"
+    state: restarted
+
+- name: restart sshd
+  service:
+    name: "{{ 'sshd' if ansible_os_family in ['RedHat', 'Suse'] else 'ssh' }}"
+    state: restarted
