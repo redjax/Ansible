@@ -133,3 +133,14 @@ coolify_nuke: false
 ## Action selector
 #  install, uninstall, update, restart, stop
 coolify_action: "install"
+
+###########
+# Netbird #
+###########
+
+netbird_setup_key: "KEY-FROM-NETBIRD"
+netbird_role: client
+netbird_server_url: "https://vpn.example.com"
+netbird_firewall_backend: auto
+netbird_enable_peer_ssh: false
+netbird_manage_host_ssh: false
