@@ -19,17 +19,19 @@
 - name: Set host SSH port
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
-    regexp: '^#?Port\s+'
+    regexp: '^Port\s+'
     line: "Port {{ netbird_host_ssh_port }}"
     backup: true
+    validate: "/usr/sbin/sshd -t -f %s"
   notify: restart sshd
 
 - name: Set root login policy
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
-    regexp: '^#?PermitRootLogin\s+'
+    regexp: '^PermitRootLogin\s+'
     line: "PermitRootLogin {{ 'yes' if netbird_enable_peer_ssh_root | bool else 'no' }}"
     backup: true
+    validate: "/usr/sbin/sshd -t -f %s"
   notify: restart sshd
 
 - name: Ensure ssh service is enabled
