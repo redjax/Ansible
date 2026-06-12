@@ -1,4 +1,18 @@
 ---
+- name: Assert host SSH port is valid
+  ansible.builtin.assert:
+    that:
+      - netbird_host_ssh_port is number
+      - netbird_host_ssh_port | int > 0
+      - netbird_host_ssh_port | int < 65536
+    fail_msg: "netbird_host_ssh_port must be a valid TCP port"
+
+- name: Assert host SSH management is enabled intentionally
+  ansible.builtin.assert:
+    that:
+      - netbird_manage_host_ssh | bool
+    fail_msg: "netbird_manage_host_ssh must be true to run ssh.yml"
+
 - name: Set host SSH port
   lineinfile:
     path: /etc/ssh/sshd_config

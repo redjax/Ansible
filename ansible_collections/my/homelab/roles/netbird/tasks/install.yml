@@ -1,4 +1,17 @@
 ---
+- name: Assert supported OS family
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family in ['Debian', 'RedHat', 'Suse']
+    fail_msg: "Unsupported OS family for this role: {{ ansible_os_family }}"
+
+- name: Assert package management prerequisites are available
+  ansible.builtin.assert:
+    that:
+      - netbird_package_name is defined
+      - netbird_package_name | length > 0
+    fail_msg: "netbird_package_name must be set by distro vars"
+
 - name: Install prereqs on Debian family
   apt:
     name: "{{ netbird_prereq_packages }}"

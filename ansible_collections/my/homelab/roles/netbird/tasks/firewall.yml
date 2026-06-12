@@ -1,4 +1,19 @@
 ---
+- name: Assert firewall backend is valid
+  ansible.builtin.assert:
+    that:
+      - netbird_firewall_backend in ['auto', 'ufw', 'firewalld', 'iptables', 'none']
+    fail_msg: "Invalid netbird_firewall_backend value"
+
+- name: Assert host SSH firewall inputs when enabled
+  ansible.builtin.assert:
+    that:
+      - netbird_host_ssh_port is number
+      - netbird_host_ssh_port | int > 0
+      - netbird_host_ssh_port | int < 65536
+    fail_msg: "netbird_host_ssh_port must be a valid TCP port"
+  when: netbird_manage_host_ssh_firewall | bool
+
 - name: Allow outbound NetBird traffic on Debian with ufw
   ufw:
     rule: allow

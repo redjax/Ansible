@@ -1,4 +1,18 @@
 ---
+- name: Assert NetBird setup key is defined
+  assert:
+    that:
+      - netbird_setup_key is defined
+      - netbird_setup_key | length > 0
+    fail_msg: "netbird_setup_key must be set"
+
+- name: Assert NetBird management URL is defined
+  ansible.builtin.assert:
+    that:
+      - netbird_management_url is defined
+      - netbird_management_url | length > 0
+    fail_msg: "netbird_management_url must be set"
+
 - name: Check current NetBird status
   command: netbird status
   register: netbird_status
