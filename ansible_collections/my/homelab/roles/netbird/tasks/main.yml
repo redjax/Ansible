@@ -1,21 +1,21 @@
 ---
 - name: Load distro vars
-  include_vars: "{{ ansible_os_family }}.yml"
+  ansible.builtin.import_tasks: load_vars.yml
 
 - name: Install NetBird
-  import_tasks: install.yml
+  ansible.builtin.import_tasks: install.yml
 
 - name: Enroll NetBird
-  import_tasks: enroll.yml
+  ansible.builtin.import_tasks: enroll.yml
   when: netbird_register | bool
 
 - name: Configure host SSH
-  import_tasks: ssh.yml
+  ansible.builtin.import_tasks: ssh.yml
   when: netbird_manage_host_ssh | bool
 
 - name: Configure firewall
-  import_tasks: firewall.yml
+  ansible.builtin.import_tasks: firewall.yml
   when: netbird_manage_firewall | bool
 
 - name: Manage service
-  import_tasks: service.yml
+  ansible.builtin.import_tasks: service.yml

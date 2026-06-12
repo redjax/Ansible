@@ -1,0 +1,23 @@
+---
+- name: "Enroll NetBird client"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_role: client
+    netbird_register: true
+    netbird_management_url: "{{ netbird_server_url | default('https://vpn.example.com') }}"
+    netbird_setup_key: "{{ vault_netbird_setup_key }}"
+    netbird_enable_peer_ssh: false
+    netbird_enable_peer_ssh_root: false
+
+  tasks:
+    - name: "Gather facts"
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: "Enroll NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: enroll.yml

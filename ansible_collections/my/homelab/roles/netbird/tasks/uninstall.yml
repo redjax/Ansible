@@ -1,9 +1,21 @@
 ---
+- name: Load distro vars
+  ansible.builtin.import_tasks: load_vars.yml
+
 - name: Assert supported OS family
   ansible.builtin.assert:
     that:
-      - ansible_os_family in ['Debian', 'RedHat', 'Suse']
-    fail_msg: "Unsupported OS family: {{ ansible_os_family }}"
+      - ansible_facts['os_family'] in ['Debian', 'RedHat', 'Suse']
+    fail_msg: "Unsupported OS family: {{ ansible_facts['os_family'] }}"
+
+- name: Assert uninstall vars are available
+  ansible.builtin.assert:
+    that:
+      - netbird_package_name is defined
+      - netbird_package_name | length > 0
+      - netbird_service_name is defined
+      - netbird_service_name | length > 0
+    fail_msg: "netbird distro vars must be loaded before uninstall"
 
 - name: Check current NetBird status
   ansible.builtin.command: netbird status
@@ -33,14 +45,14 @@
   ansible.builtin.file:
     path: /etc/apt/sources.list.d/netbird.list
     state: absent
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == "Debian"
 
 - name: Remove Debian repo key
   ansible.builtin.file:
     path: "{{ netbird_repo_keyring }}"
     state: absent
   when:
-    - ansible_os_family == "Debian"
+    - ansible_facts['os_family'] == "Debian"
     - netbird_repo_keyring is defined
     - netbird_repo_keyring | length > 0
 
@@ -48,4 +60,4 @@
   ansible.builtin.file:
     path: /etc/yum.repos.d/netbird.repo
     state: absent
-  when: ansible_os_family in ['RedHat', 'Suse']
+  when: ansible_facts['os_family'] in ['RedHat', 'Suse']

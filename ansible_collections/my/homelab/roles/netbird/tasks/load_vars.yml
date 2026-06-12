@@ -1,0 +1,8 @@
+---
+#########################################################
+# Loads the appropriate vars/{DistroName}.yml vars file #
+#########################################################
+
+- name: Load distro vars
+  ansible.builtin.include_vars:
+    file: "{{ role_path }}/vars/{{ ansible_facts['os_family'] }}.yml"
