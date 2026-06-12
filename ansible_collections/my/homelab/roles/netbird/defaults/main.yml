@@ -20,5 +20,7 @@ netbird_host_ssh_port: 22
 netbird_manage_host_ssh_firewall: false
 netbird_host_ssh_allow_from_cidrs: []
 
+netbird_manage_dns: true
+
 netbird_service_enabled: true
 netbird_service_state: started

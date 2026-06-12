@@ -20,6 +20,7 @@ Install & manage [Netbird](server) servers and clients.
 | `netbird_host_ssh_port`             | `22`                        | SSH port to configure on the host when SSH management is enabled.                               |
 | `netbird_manage_host_ssh_firewall`  | `false`                     | Whether the role should open the host SSH port in the firewall.                                 |
 | `netbird_host_ssh_allow_from_cidrs` | `[]`                        | CIDR ranges allowed to reach the host SSH port.                                                 |
+| `netbird_manage_dns`                | `true`                      | Use Netbird server's DNS (you must configure a custom zone in the dashboard).                   |
 | `netbird_service_enabled`           | `true`                      | Whether the NetBird service should be enabled at boot.                                          |
 | `netbird_service_state`             | `started`                   | Desired runtime state of the NetBird service.                                                   |
 
