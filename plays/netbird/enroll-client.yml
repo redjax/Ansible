@@ -8,7 +8,7 @@
     netbird_role: client
     netbird_register: true
     netbird_management_url: "{{ netbird_server_url | default('https://vpn.example.com') }}"
-    netbird_setup_key: "{{ vault_netbird_setup_key }}"
+    netbird_setup_key: "{{ netbird_enroll_key }}"
     netbird_enable_peer_ssh: false
     netbird_enable_peer_ssh_root: false
 

@@ -138,7 +138,7 @@ coolify_action: "install"
 # Netbird #
 ###########
 
-netbird_setup_key: "KEY-FROM-NETBIRD"
+netbird_enroll_key: "KEY-FROM-NETBIRD"
 netbird_role: client
 netbird_server_url: "https://vpn.example.com"
 netbird_firewall_backend: auto
