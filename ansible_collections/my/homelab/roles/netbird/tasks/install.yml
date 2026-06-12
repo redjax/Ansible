@@ -15,7 +15,7 @@
       - netbird_package_name | length > 0
     fail_msg: "netbird_package_name must be set by distro vars"
 
-- name: Install prereqs on Debian family
+- name: Install prerequisites on Debian
   ansible.builtin.apt:
     name: "{{ netbird_prereq_packages }}"
     state: present
@@ -34,11 +34,17 @@
     state: present
   when: ansible_facts['os_family'] == "Suse"
 
-- name: Add NetBird repo key on Debian
+- name: Download NetBird apt key on Debian
   ansible.builtin.get_url:
     url: "{{ netbird_repo_key_url }}"
-    dest: "{{ netbird_repo_keyring }}"
+    dest: /tmp/netbird-archive-keyring.asc
     mode: "0644"
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Dearmor NetBird apt key on Debian
+  ansible.builtin.command:
+    cmd: gpg --dearmor --yes --output "{{ netbird_repo_keyring }}" /tmp/netbird-archive-keyring.asc
+    creates: "{{ netbird_repo_keyring }}"
   when: ansible_facts['os_family'] == "Debian"
 
 - name: Add NetBird apt repo on Debian
@@ -46,12 +52,14 @@
     repo: "{{ netbird_repo_line }}"
     filename: netbird
     state: present
+    update_cache: false
   when: ansible_facts['os_family'] == "Debian"
 
 - name: Refresh apt cache on Debian
   ansible.builtin.apt:
     update_cache: true
   when: ansible_facts['os_family'] == "Debian"
+  become: true
 
 - name: Add NetBird repo key on RedHat/SUSE
   ansible.builtin.rpm_key:

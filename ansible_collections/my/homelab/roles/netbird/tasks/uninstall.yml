@@ -47,7 +47,7 @@
     state: absent
   when: ansible_facts['os_family'] == "Debian"
 
-- name: Remove Debian repo key
+- name: Remove Debian repo keyring
   ansible.builtin.file:
     path: "{{ netbird_repo_keyring }}"
     state: absent
@@ -55,6 +55,12 @@
     - ansible_facts['os_family'] == "Debian"
     - netbird_repo_keyring is defined
     - netbird_repo_keyring | length > 0
+
+- name: Remove Debian temporary key file
+  ansible.builtin.file:
+    path: /tmp/netbird-archive-keyring.asc
+    state: absent
+  when: ansible_facts['os_family'] == "Debian"
 
 - name: Remove RedHat/SUSE repo file
   ansible.builtin.file:
