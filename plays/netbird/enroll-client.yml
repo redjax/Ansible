@@ -11,6 +11,7 @@
     netbird_setup_key: "{{ netbird_enroll_key }}"
     netbird_enable_peer_ssh: false
     netbird_enable_peer_ssh_root: false
+    netbird_manage_dns: false
 
   tasks:
     - name: "Gather facts"
