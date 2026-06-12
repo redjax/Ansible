@@ -22,3 +22,157 @@ Install & manage [Netbird](server) servers and clients.
 | `netbird_host_ssh_allow_from_cidrs` | `[]`                        | CIDR ranges allowed to reach the host SSH port.                                                 |
 | `netbird_service_enabled`           | `true`                      | Whether the NetBird service should be enabled at boot.                                          |
 | `netbird_service_state`             | `started`                   | Desired runtime state of the NetBird service.                                                   |
+
+## Examples
+
+### Example Playbooks
+
+Install Netbird:
+
+```yaml
+---
+- name: "Install NetBird"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_role: client
+    netbird_register: false
+    netbird_management_url: "{{ netbird_server_url | default('https://vpn.example.com') }}"
+    netbird_enable_peer_ssh: false
+    netbird_enable_peer_ssh_root: false
+    netbird_manage_host_ssh: false
+    netbird_manage_firewall: false
+    netbird_firewall_backend: auto
+    netbird_update_packages: true
+
+  tasks:
+    - name: "Install NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: install.yml
+
+    - name: "Enroll NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: enroll.yml
+      when: netbird_register | bool
+
+```
+
+Enroll Netbird device:
+
+```yaml
+---
+- name: "Enroll NetBird client"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_role: client
+    netbird_register: true
+    netbird_management_url: "{{ netbird_server_url | default('https://vpn.example.com') }}"
+    netbird_setup_key: "{{ netbird_enroll_key }}"
+    netbird_enable_peer_ssh: false
+    netbird_enable_peer_ssh_root: false
+
+  tasks:
+    - name: "Gather facts"
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: "Enroll NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: enroll.yml
+
+```
+
+Install and enroll Netbird device:
+
+```yaml
+---
+- name: "Install and Enroll NetBird"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_role: client
+    netbird_register: true
+    netbird_management_url: "{{ netbird_server_url | default('https://vpn.example.com') }}"
+    netbird_setup_key: "{{ netbird_enroll_key }}"
+    netbird_enable_peer_ssh: false
+    netbird_enable_peer_ssh_root: false
+    netbird_manage_host_ssh: false
+    netbird_manage_firewall: false
+    netbird_firewall_backend: auto
+    netbird_update_packages: true
+
+  tasks:
+    - name: "Gather facts"
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: "Install NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: install.yml
+
+    - name: "Enroll NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: enroll.yml
+
+```
+
+Uninstall Netbird:
+
+```yaml
+---
+- name: "Uninstall NetBird"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_purge_data: false
+
+  tasks:
+    - name: "Gather facts"
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: "Uninstall NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: uninstall.yml
+
+```
+
+Configure firewall for Netbird:
+
+```yaml
+---
+- name: "Configure NetBird firewall"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_manage_firewall: true
+    netbird_firewall_backend: auto
+
+  tasks:
+    - name: "Gather facts"
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: "Configure firewall"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: firewall.yml
+
+```
