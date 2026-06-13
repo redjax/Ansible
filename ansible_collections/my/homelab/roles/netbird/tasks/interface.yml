@@ -1,0 +1,16 @@
+---
+- name: "Check wt0 interface exists"
+  ansible.builtin.command: ip link show wt0
+  register: wt0_check
+  failed_when: false
+  changed_when: false
+
+- name: "Fail if wt0 is missing"
+  ansible.builtin.fail:
+    msg: "NetBird interface wt0 is missing"
+  when: wt0_check.rc != 0
+
+- name: "Check wt0 is up"
+  ansible.builtin.command: ip link show wt0
+  register: wt0_state
+  changed_when: false
