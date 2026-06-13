@@ -3,7 +3,13 @@
   ansible.builtin.systemd:
     name: netbird
     state: stopped
-  ignore_errors: true
+  failed_when: false
+
+- name: Check if NetBird systemd unit exists
+  ansible.builtin.command: systemctl list-unit-files netbird.service
+  register: netbird_unit
+  changed_when: false
+  failed_when: false
 
 - name: "Clean NetBird state files"
   ansible.builtin.file:
@@ -15,10 +21,10 @@
     - /var/lib/netbird/client.db
     - /var/lib/netbird/db.sqlite
     - /var/lib/netbird/netbird.db
-    - /var/run/netbird.sock
-  ignore_errors: true
+  failed_when: false
 
-- name: "Reset NetBird failed state"
+- name: Reset NetBird failed state
   ansible.builtin.command: systemctl reset-failed netbird
+  when: netbird_unit.rc == 0
   changed_when: false
-  ignore_errors: true
+  failed_when: false
