@@ -1,26 +1,50 @@
 ---
-- name: "Check NetBird service status"
-  ansible.builtin.command: systemctl is-active netbird
-  register: netbird_active
-  failed_when: false
-  changed_when: false
-
-- name: "Check NetBird socket exists"
+- name: Check NetBird socket exists
   ansible.builtin.stat:
     path: /var/run/netbird.sock
-  register: netbird_socket
+  register: netbird_sock
 
-- name: "Check NetBird CLI status"
+- name: Fail if NetBird socket is missing
+  ansible.builtin.fail:
+    msg: "NetBird socket missing - daemon is not running correctly"
+  when: not netbird_sock.stat.exists
+
+- name: Get NetBird status
   ansible.builtin.command: netbird status
   register: netbird_status
-  failed_when: false
   changed_when: false
+  failed_when: false
 
-- name: "Restart NetBird if unhealthy"
-  ansible.builtin.systemd:
-    name: netbird
-    state: restarted
+- name: Fail if NetBird daemon is not responding
+  ansible.builtin.fail:
+    msg: |
+      NetBird status command failed or is not responding:
+      {{ netbird_status.stderr | default(netbird_status.stdout) }}
+  when: netbird_status.rc != 0
+
+- name: Fail if NetBird management plane is not connected
+  ansible.builtin.fail:
+    msg: |
+      NetBird is not connected to management plane.
+      Status:
+      {{ netbird_status.stdout }}
   when: >
-    netbird_active.stdout != "active" or
-    not netbird_socket.stat.exists or
-    netbird_status.rc != 0
+    'Management: Connected' not in netbird_status.stdout or
+    'Signal: Connected' not in netbird_status.stdout
+
+- name: Check WireGuard interface exists
+  ansible.builtin.command: ip link show wt0
+  register: wg_if
+  changed_when: false
+  failed_when: wg_if.rc != 0
+
+- name: Check NetBird DNS resolution
+  ansible.builtin.command: getent ahosts google.com
+  register: dns_check
+  changed_when: false
+  failed_when: dns_check.rc != 0
+
+- name: Validate at least one result returned from DNS
+  ansible.builtin.fail:
+    msg: "DNS resolution returned no results via system resolver"
+  when: dns_check.stdout | length == 0
