@@ -1,0 +1,29 @@
+---
+########################################################
+# Task to reset Netbird. Use as a troubleshooting step #
+# when the client service isn't working correctly.     #
+########################################################
+
+- name: "Restart NetBird service"
+  ansible.builtin.systemd:
+    name: netbird
+    state: restarted
+
+- name: "Wait for socket"
+  ansible.builtin.wait_for:
+    path: /var/run/netbird.sock
+    state: present
+    timeout: 30
+
+- name: "Wait for NetBird status to become healthy"
+  ansible.builtin.command: netbird status
+  register: nb_status
+  retries: 5
+  delay: 3
+  until: nb_status.rc == 0
+  changed_when: false
+
+- name: "Re-assert service is enabled"
+  ansible.builtin.systemd:
+    name: netbird
+    enabled: true
