@@ -1,0 +1,24 @@
+---
+- name: "Ensure NetBird is stopped before cleanup"
+  ansible.builtin.systemd:
+    name: netbird
+    state: stopped
+  ignore_errors: true
+
+- name: "Clean NetBird state files"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /var/lib/netbird/identity.json
+    - /var/lib/netbird/config.json
+    - /var/lib/netbird/client.db
+    - /var/lib/netbird/db.sqlite
+    - /var/lib/netbird/netbird.db
+    - /var/run/netbird.sock
+  ignore_errors: true
+
+- name: "Reset NetBird failed state"
+  ansible.builtin.command: systemctl reset-failed netbird
+  changed_when: false
+  ignore_errors: true
