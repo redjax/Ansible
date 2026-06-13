@@ -26,7 +26,52 @@
         name: my.homelab.netbird
         tasks_from: install.yml
 
+    - name: "Configure logrotate for NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: logging.yml
+
+    - name: "Restart NetBird service"
+      ansible.builtin.systemd:
+        name: netbird
+        state: restarted
+        daemon_reload: true
+
+    - name: "Wait for NetBird socket"
+      ansible.builtin.wait_for:
+        path: /var/run/netbird.sock
+        state: present
+        timeout: 30
+
+    - name: "Wait for NetBird daemon stabilization"
+      ansible.builtin.pause:
+        seconds: 3
+
+    - name: "Wait for NetBird API readiness"
+      ansible.builtin.command: netbird status
+      register: nb_ready
+      retries: 25
+      delay: 2
+      until: >
+        nb_ready.rc == 0 and
+        ('Disconnected' not in nb_ready.stdout) and
+        ('N/A' not in nb_ready.stdout)
+      changed_when: false
+
     - name: "Enroll NetBird"
       ansible.builtin.import_role:
         name: my.homelab.netbird
         tasks_from: enroll.yml
+
+    - name: "Wait for NetBird DNS to be functional"
+      ansible.builtin.command: getent hosts google.com
+      register: dns_ready
+      retries: 25
+      delay: 2
+      until: dns_ready.rc == 0
+      changed_when: false
+
+    - name: "Healthcheck NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: health.yml
