@@ -4,26 +4,63 @@
 # when the client service isn't working correctly.     #
 ########################################################
 
-- name: "Restart NetBird service"
+- name: Check NetBird socket exists
+  ansible.builtin.stat:
+    path: /var/run/netbird.sock
+  register: netbird_sock
+
+- name: Restart NetBird if socket is missing
   ansible.builtin.systemd:
     name: netbird
     state: restarted
+  when: not netbird_sock.stat.exists
 
-- name: "Wait for socket"
+- name: Wait for NetBird socket to appear
   ansible.builtin.wait_for:
     path: /var/run/netbird.sock
-    state: present
     timeout: 30
 
-- name: "Wait for NetBird status to become healthy"
+- name: Check NetBird status
   ansible.builtin.command: netbird status
-  register: nb_status
-  retries: 5
-  delay: 3
-  until: nb_status.rc == 0
+  register: netbird_status
   changed_when: false
+  failed_when: false
 
-- name: "Re-assert service is enabled"
+- name: Restart NetBird if not connected
   ansible.builtin.systemd:
     name: netbird
-    enabled: true
+    state: restarted
+  when: >
+    netbird_status.rc != 0 or
+    ('Disconnected' in netbird_status.stdout)
+
+- name: Wait for WireGuard interface
+  ansible.builtin.command: ip link show wt0
+  register: wg_check
+  retries: 5
+  delay: 3
+  until: wg_check.rc == 0
+  changed_when: false
+
+- name: Ensure DNS becomes available (retry until stable)
+  ansible.builtin.command: nslookup google.com
+  register: dns_check
+  retries: 5
+  delay: 3
+  until: dns_check.rc == 0
+  changed_when: false
+
+- name: Final NetBird status validation
+  ansible.builtin.command: netbird status
+  register: final_status
+  changed_when: false
+
+- name: Fail if reconciliation did not fix state
+  ansible.builtin.fail:
+    msg: |
+      NetBird reconciliation failed.
+      Final status:
+      {{ final_status.stdout }}
+  when: >
+    final_status.rc != 0 or
+    ('Disconnected' in final_status.stdout)
