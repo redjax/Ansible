@@ -1,0 +1,26 @@
+---
+- name: "Check NetBird service status"
+  ansible.builtin.command: systemctl is-active netbird
+  register: netbird_active
+  failed_when: false
+  changed_when: false
+
+- name: "Check NetBird socket exists"
+  ansible.builtin.stat:
+    path: /var/run/netbird.sock
+  register: netbird_socket
+
+- name: "Check NetBird CLI status"
+  ansible.builtin.command: netbird status
+  register: netbird_status
+  failed_when: false
+  changed_when: false
+
+- name: "Restart NetBird if unhealthy"
+  ansible.builtin.systemd:
+    name: netbird
+    state: restarted
+  when: >
+    netbird_active.stdout != "active" or
+    not netbird_socket.stat.exists or
+    netbird_status.rc != 0
