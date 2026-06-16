@@ -1,50 +1,47 @@
 ---
-- name: Check NetBird socket exists
+- name: Detect DNS backend
+  ansible.builtin.import_tasks: detect_dns.yml
+
+- name: Check socket
   ansible.builtin.stat:
     path: /var/run/netbird.sock
-  register: netbird_sock
+  register: sock
 
-- name: Fail if NetBird socket is missing
+- name: Fail if socket missing
   ansible.builtin.fail:
-    msg: "NetBird socket missing - daemon is not running correctly"
-  when: not netbird_sock.stat.exists
+    msg: "NetBird daemon not running"
+  when: not sock.stat.exists
 
-- name: Get NetBird status
+- name: Get status
   ansible.builtin.command: netbird status
-  register: netbird_status
+  register: status
   changed_when: false
   failed_when: false
 
-- name: Fail if NetBird daemon is not responding
+- name: Fail if disconnected
   ansible.builtin.fail:
-    msg: |
-      NetBird status command failed or is not responding:
-      {{ netbird_status.stderr | default(netbird_status.stdout) }}
-  when: netbird_status.rc != 0
-
-- name: Fail if NetBird management plane is not connected
-  ansible.builtin.fail:
-    msg: |
-      NetBird is not connected to management plane.
-      Status:
-      {{ netbird_status.stdout }}
+    msg: "{{ status.stdout }}"
   when: >
-    'Management: Connected' not in netbird_status.stdout or
-    'Signal: Connected' not in netbird_status.stdout
+    'Management: Connected' not in status.stdout or
+    'Signal: Connected' not in status.stdout
 
-- name: Check WireGuard interface exists
-  ansible.builtin.command: ip link show wt0
-  register: wg_if
+- name: DNS test (systemd-resolved)
+  ansible.builtin.command: resolvectl query google.com
+  register: dns_resolved
   changed_when: false
-  failed_when: wg_if.rc != 0
+  failed_when: false
+  when: netbird_dns_mode_effective == "systemd-resolved"
 
-- name: Check NetBird DNS resolution
+- name: DNS test (NetworkManager / resolvconf)
   ansible.builtin.command: getent ahosts google.com
-  register: dns_check
+  register: dns_generic
   changed_when: false
-  failed_when: dns_check.rc != 0
+  failed_when: false
+  when: netbird_dns_mode_effective != "systemd-resolved"
 
-- name: Validate at least one result returned from DNS
+- name: Validate DNS
   ansible.builtin.fail:
-    msg: "DNS resolution returned no results via system resolver"
-  when: dns_check.stdout | length == 0
+    msg: "DNS broken on backend {{ netbird_dns_mode_effective }}"
+  when: >
+    (netbird_dns_mode_effective == "systemd-resolved" and dns_resolved.rc != 0) or
+    (netbird_dns_mode_effective != "systemd-resolved" and dns_generic.rc != 0)

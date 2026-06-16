@@ -22,5 +22,18 @@ netbird_host_ssh_allow_from_cidrs: []
 
 netbird_manage_dns: true
 
+## DNS Modes
+#  auto = detect per-host
+#  systemd-resolved = use resolvectl-safe behavior
+#  networkmanager = rely on NM DNS stack
+#  resolvconf = NetBird-managed resolv.conf
+#  disabled = NetBird never touches DNS
+netbird_dns_mode: disabled
+
+## Computed at runtime, do not set in group_vars
+netbird_dns_mode_effective: ""
+## Internal detection result
+netbird_dns_backend: ""
+
 netbird_service_enabled: true
 netbird_service_state: started

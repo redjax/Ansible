@@ -2,6 +2,9 @@
 - name: Load distro vars
   ansible.builtin.import_tasks: load_vars.yml
 
+# - name: Detect DNS environment
+#   ansible.builtin.import_tasks: detect_dns.yml
+
 - name: Clean NetBird state
   ansible.builtin.import_tasks: clean.yml
 

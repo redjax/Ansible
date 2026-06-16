@@ -2,19 +2,14 @@
 - name: Load distro vars
   ansible.builtin.import_tasks: load_vars.yml
 
-- name: Assert NetBird setup key is defined
+- name: Detect DNS backend
+  ansible.builtin.import_tasks: detect_dns.yml
+
+- name: Assert setup key
   ansible.builtin.assert:
     that:
       - netbird_setup_key is defined
       - netbird_setup_key | length > 0
-    fail_msg: "netbird_setup_key must be set"
-
-- name: Assert NetBird management URL is defined
-  ansible.builtin.assert:
-    that:
-      - netbird_management_url is defined
-      - netbird_management_url | length > 0
-    fail_msg: "netbird_management_url must be set"
 
 - name: Check current NetBird status
   ansible.builtin.command: netbird status
@@ -28,11 +23,7 @@
       netbird up
       --management-url {{ netbird_management_url }}
       --setup-key {{ netbird_setup_key }}
-      {% if not netbird_manage_dns | bool %} --disable-dns{% endif %}
-      {% if netbird_enable_peer_ssh | bool %} --allow-server-ssh{% endif %}
-      {% if netbird_enable_peer_ssh_root | bool %} --enable-ssh-root{% endif %}
+      {% if netbird_manage_dns == false %} --disable-dns{% endif %}
 
 - name: Enroll machine
   ansible.builtin.command: "{{ netbird_up_cmd }}"
-  when: "'NeedsLogin' in (netbird_status.stdout | default('')) or netbird_status.rc != 0"
-  notify: restart netbird

@@ -42,13 +42,32 @@
   until: wg_check.rc == 0
   changed_when: false
 
-- name: Ensure DNS becomes available (retry until stable)
-  ansible.builtin.command: nslookup google.com
-  register: dns_check
-  retries: 5
-  delay: 3
-  until: dns_check.rc == 0
+- name: DNS check (systemd-resolved)
+  ansible.builtin.command: resolvectl query google.com
+  register: dns_check_resolved
   changed_when: false
+  failed_when: false
+  when: netbird_dns_mode_effective == "systemd-resolved"
+
+- name: DNS check (generic NSS resolver)
+  ansible.builtin.command: getent ahosts google.com
+  register: dns_check_generic
+  changed_when: false
+  failed_when: false
+  when: netbird_dns_mode_effective != "systemd-resolved"
+
+- name: Fail if DNS is not working
+  ansible.builtin.fail:
+    msg: |
+      DNS reconciliation failed.
+
+      Mode: {{ netbird_dns_mode_effective }}
+
+      NetBird status:
+      {{ netbird_status.stdout }}
+  when: >
+    (netbird_dns_mode_effective == "systemd-resolved" and (dns_check_resolved.rc | default(1)) != 0) or
+    (netbird_dns_mode_effective != "systemd-resolved" and (dns_check_generic.rc | default(1)) != 0)
 
 - name: Final NetBird status validation
   ansible.builtin.command: netbird status

@@ -13,14 +13,8 @@
 
 - name: "Clean NetBird state files"
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: /var/lib/netbird
     state: absent
-  loop:
-    - /var/lib/netbird/identity.json
-    - /var/lib/netbird/config.json
-    - /var/lib/netbird/client.db
-    - /var/lib/netbird/db.sqlite
-    - /var/lib/netbird/netbird.db
   failed_when: false
 
 - name: Reset NetBird failed state

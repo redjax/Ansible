@@ -1,0 +1,15 @@
+---
+- name: Debug host DNS
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Gather facts
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: Debug DNS
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: dns_debug.yml

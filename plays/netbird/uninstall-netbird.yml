@@ -5,7 +5,7 @@
   gather_facts: true
 
   vars:
-    netbird_purge_data: false
+    netbird_purge_data: true
 
   tasks:
     - name: "Gather facts"
@@ -16,3 +16,10 @@
       ansible.builtin.import_role:
         name: my.homelab.netbird
         tasks_from: uninstall.yml
+
+    - name: "Clean NetBird state before re-enroll"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: clean.yml
+      when: netbird_purge_data | bool
+      failed_when: false
