@@ -1,0 +1,42 @@
+---
+- name: Detect resolver
+  ansible.builtin.stat:
+    path: /run/systemd/resolve
+  register: resolved_dir
+
+- name: Show resolv.conf
+  ansible.builtin.command: cat /etc/resolv.conf
+  register: resolvconf
+  changed_when: false
+
+- name: Show NetBird status
+  ansible.builtin.command: netbird status
+  register: nbstatus
+  changed_when: false
+
+- name: Show routes
+  ansible.builtin.command: ip route
+  register: routes
+  changed_when: false
+
+- name: Show wt0
+  ansible.builtin.command: ip addr show wt0
+  register: wt0
+  changed_when: false
+  failed_when: false
+
+- name: Show resolved status
+  ansible.builtin.command: resolvectl status
+  register: resolved
+  changed_when: false
+  failed_when: false
+
+- name: Dump diagnostics
+  ansible.builtin.debug:
+    msg:
+      resolver: "{{ 'systemd-resolved' if resolved_dir.stat.exists else 'other' }}"
+      resolvconf: "{{ resolvconf.stdout_lines }}"
+      netbird: "{{ nbstatus.stdout_lines }}"
+      routes: "{{ routes.stdout_lines }}"
+      wt0: "{{ wt0.stdout_lines }}"
+      resolved: "{{ resolved.stdout_lines }}"

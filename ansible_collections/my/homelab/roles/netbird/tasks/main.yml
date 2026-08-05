@@ -1,0 +1,39 @@
+---
+- name: Load distro vars
+  ansible.builtin.import_tasks: load_vars.yml
+
+# - name: Detect DNS environment
+#   ansible.builtin.import_tasks: detect_dns.yml
+
+- name: Clean NetBird state
+  ansible.builtin.import_tasks: clean.yml
+
+- name: Install NetBird
+  ansible.builtin.import_tasks: install.yml
+
+- name: Enroll NetBird
+  ansible.builtin.import_tasks: enroll.yml
+  when: netbird_register | bool
+
+- name: Configure host SSH
+  ansible.builtin.import_tasks: ssh.yml
+  when: netbird_manage_host_ssh | bool
+
+- name: Configure firewall
+  ansible.builtin.import_tasks: firewall.yml
+  when: netbird_manage_firewall | bool
+
+- name: Manage service
+  ansible.builtin.import_tasks: service.yml
+
+- name: Reconcile NetBird state
+  ansible.builtin.import_tasks: reconcile.yml
+
+- name: Configure logging
+  ansible.builtin.import_tasks: logging.yml
+
+- name: Interface validation
+  ansible.builtin.import_tasks: interface.yml
+
+- name: Health check NetBird
+  ansible.builtin.import_tasks: health.yml

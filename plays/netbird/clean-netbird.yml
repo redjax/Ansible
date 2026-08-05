@@ -1,0 +1,15 @@
+---
+- name: "Clean NetBird state"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Gather facts
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: Clean NetBird
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: clean.yml

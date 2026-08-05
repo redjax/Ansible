@@ -1,0 +1,66 @@
+---
+- name: "Install NetBird"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_role: client
+    netbird_register: false
+    netbird_management_url: "{{ netbird_server_url | default('https://vpn.example.com') }}"
+    netbird_enable_peer_ssh: false
+    netbird_enable_peer_ssh_root: false
+    netbird_manage_host_ssh: false
+    netbird_manage_firewall: false
+    netbird_manage_dns: false
+    netbird_firewall_backend: auto
+    netbird_update_packages: true
+
+  tasks:
+    - name: "Install NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: install.yml
+
+    - name: "Configure logrotate for NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: logging.yml
+
+    - name: "Restart NetBird service"
+      ansible.builtin.systemd:
+        name: netbird
+        state: restarted
+        daemon_reload: true
+
+    - name: "Wait for NetBird socket"
+      ansible.builtin.wait_for:
+        path: /var/run/netbird.sock
+        state: present
+        timeout: 30
+
+    - name: "Wait for NetBird daemon stabilization"
+      ansible.builtin.pause:
+        seconds: 3
+
+    - name: "Wait for NetBird API readiness (strict)"
+      ansible.builtin.command: netbird status
+      register: nb_ready
+      retries: 25
+      delay: 2
+      until: >
+        nb_ready.rc == 0 and
+        ('Disconnected' not in nb_ready.stdout) and
+        ('N/A' not in nb_ready.stdout)
+      changed_when: false
+
+    - name: "Enroll NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: enroll.yml
+      when: netbird_register | bool
+
+    - name: "Healthcheck NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: health.yml

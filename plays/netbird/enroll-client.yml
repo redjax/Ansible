@@ -1,0 +1,53 @@
+---
+- name: "Enroll NetBird client"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_role: client
+    netbird_register: true
+    netbird_management_url: "{{ netbird_server_url | default('https://vpn.example.com') }}"
+    netbird_setup_key: "{{ netbird_enroll_key }}"
+    netbird_enable_peer_ssh: false
+    netbird_enable_peer_ssh_root: false
+    netbird_manage_dns: false
+
+  tasks:
+    - name: "Gather facts"
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: "Enroll NetBird"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: enroll.yml
+
+    - name: "Wait for NetBird socket"
+      ansible.builtin.wait_for:
+        path: /var/run/netbird.sock
+        state: present
+        timeout: 30
+
+    - name: "Wait for NetBird API readiness"
+      ansible.builtin.command: netbird status
+      register: nb_ready
+      retries: 20
+      delay: 2
+      until: >
+        nb_ready.rc == 0 and
+        ('Disconnected' not in nb_ready.stdout)
+      changed_when: false
+
+    - name: "Validate NetBird DNS works"
+      ansible.builtin.command: getent hosts google.com
+      register: dns_ready
+      retries: 20
+      delay: 2
+      until: dns_ready.rc == 0
+      changed_when: false
+
+    - name: "Check interface & socket consistency"
+      ansible.builtin.shell: |
+        test -S /var/run/netbird.sock && ip link show wt0
+      changed_when: false

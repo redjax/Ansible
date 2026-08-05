@@ -1,0 +1,58 @@
+---
+- name: Load distro vars
+  ansible.builtin.import_tasks: load_vars.yml
+
+- name: Assert firewall backend is valid
+  ansible.builtin.assert:
+    that:
+      - netbird_firewall_backend in ['auto', 'ufw', 'firewalld', 'iptables', 'none']
+    fail_msg: "Invalid netbird_firewall_backend value"
+
+- name: Assert host SSH firewall inputs when enabled
+  ansible.builtin.assert:
+    that:
+      - netbird_host_ssh_port is number
+      - netbird_host_ssh_port | int > 0
+      - netbird_host_ssh_port | int < 65536
+    fail_msg: "netbird_host_ssh_port must be a valid TCP port"
+  when: netbird_manage_host_ssh_firewall | bool
+
+- name: Allow outbound NetBird traffic on Debian with ufw
+  ansible.builtin.ufw:
+    rule: allow
+    direction: out
+    port: "443"
+    proto: tcp
+  when:
+    - ansible_facts['os_family'] == "Debian"
+    - netbird_firewall_backend in ["auto", "ufw"]
+
+- name: Allow host SSH port on ufw
+  ansible.builtin.ufw:
+    rule: allow
+    direction: in
+    port: "{{ netbird_host_ssh_port }}"
+    proto: tcp
+  when:
+    - ansible_facts['os_family'] == "Debian"
+    - netbird_manage_host_ssh_firewall | bool
+    - netbird_firewall_backend in ["auto", "ufw"]
+
+- name: Allow host SSH port on firewalld
+  ansible.builtin.firewalld:
+    port: "{{ netbird_host_ssh_port }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled
+  when:
+    - ansible_facts['os_family'] == "RedHat"
+    - netbird_manage_host_ssh_firewall | bool
+    - netbird_firewall_backend in ["auto", "firewalld"]
+
+- name: Allow host SSH port with iptables
+  ansible.builtin.command: >
+    sh -c 'iptables -C INPUT -p tcp --dport {{ netbird_host_ssh_port }} -j ACCEPT
+    || iptables -I INPUT -p tcp --dport {{ netbird_host_ssh_port }} -j ACCEPT'
+  when:
+    - netbird_manage_host_ssh_firewall | bool
+    - netbird_firewall_backend in ["auto", "iptables"]

@@ -1,0 +1,19 @@
+---
+- name: "Configure NetBird firewall"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_manage_firewall: true
+    netbird_firewall_backend: auto
+
+  tasks:
+    - name: "Gather facts"
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: "Configure firewall"
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: firewall.yml

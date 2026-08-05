@@ -1,0 +1,23 @@
+---
+- name: Detect DNS backend
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Gather facts
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: Detect DNS
+      ansible.builtin.import_role:
+        name: my.homelab.netbird
+        tasks_from: detect_dns.yml
+
+    - name: Show resolv.conf
+      ansible.builtin.command: cat /etc/resolv.conf
+      register: resolvconf
+      changed_when: false
+
+    - debug:
+        var: resolvconf.stdout_lines

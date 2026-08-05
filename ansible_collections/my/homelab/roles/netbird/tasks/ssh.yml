@@ -1,0 +1,41 @@
+---
+- name: Load distro vars
+  ansible.builtin.import_tasks: load_vars.yml
+
+- name: Assert host SSH port is valid
+  ansible.builtin.assert:
+    that:
+      - netbird_host_ssh_port is number
+      - netbird_host_ssh_port | int > 0
+      - netbird_host_ssh_port | int < 65536
+    fail_msg: "netbird_host_ssh_port must be a valid TCP port"
+
+- name: Assert host SSH management is enabled intentionally
+  ansible.builtin.assert:
+    that:
+      - netbird_manage_host_ssh | bool
+    fail_msg: "netbird_manage_host_ssh must be true to run ssh.yml"
+
+- name: Set host SSH port
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^Port\s+'
+    line: "Port {{ netbird_host_ssh_port }}"
+    backup: true
+    validate: "/usr/sbin/sshd -t -f %s"
+  notify: restart sshd
+
+- name: Set root login policy
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin\s+'
+    line: "PermitRootLogin {{ 'yes' if netbird_enable_peer_ssh_root | bool else 'no' }}"
+    backup: true
+    validate: "/usr/sbin/sshd -t -f %s"
+  notify: restart sshd
+
+- name: Ensure ssh service is enabled
+  ansible.builtin.service:
+    name: "{{ 'sshd' if ansible_facts['os_family'] in ['RedHat', 'Suse'] else 'ssh' }}"
+    enabled: true
+    state: started

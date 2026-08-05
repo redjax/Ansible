@@ -1,0 +1,29 @@
+---
+- name: Load distro vars
+  ansible.builtin.import_tasks: load_vars.yml
+
+- name: Detect DNS backend
+  ansible.builtin.import_tasks: detect_dns.yml
+
+- name: Assert setup key
+  ansible.builtin.assert:
+    that:
+      - netbird_setup_key is defined
+      - netbird_setup_key | length > 0
+
+- name: Check current NetBird status
+  ansible.builtin.command: netbird status
+  register: netbird_status
+  changed_when: false
+  failed_when: false
+
+- name: Build NetBird up command
+  ansible.builtin.set_fact:
+    netbird_up_cmd: >-
+      netbird up
+      --management-url {{ netbird_management_url }}
+      --setup-key {{ netbird_setup_key }}
+      {% if netbird_manage_dns == false %} --disable-dns{% endif %}
+
+- name: Enroll machine
+  ansible.builtin.command: "{{ netbird_up_cmd }}"

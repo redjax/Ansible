@@ -1,0 +1,12 @@
+---
+- name: Assert service state is valid
+  ansible.builtin.assert:
+    that:
+      - netbird_service_state in ['started', 'stopped', 'restarted']
+    fail_msg: "netbird_service_state must be started, stopped, or restarted"
+
+- name: Ensure NetBird service enabled
+  service:
+    name: "{{ netbird_service_name }}"
+    enabled: "{{ netbird_service_enabled }}"
+    state: "{{ netbird_service_state }}"

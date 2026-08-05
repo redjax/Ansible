@@ -1,0 +1,7 @@
+---
+netbird_service_name: netbird
+netbird_package_name: netbird
+netbird_prereq_packages:
+  - ca-certificates
+  - curl
+  - zypper

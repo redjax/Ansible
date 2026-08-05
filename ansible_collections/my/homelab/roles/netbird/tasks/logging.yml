@@ -1,0 +1,6 @@
+---
+- name: "Install NetBird logrotate config"
+  ansible.builtin.template:
+    src: netbird.logrotate.j2
+    dest: /etc/logrotate.d/netbird
+    mode: "0644"

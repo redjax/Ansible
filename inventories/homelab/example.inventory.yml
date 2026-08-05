@@ -21,6 +21,15 @@ all:
       ansible_ssh_port: 222
       ## Set the username for the remote Linux user
       remote_host_user: "ubuntu"
+
+      ## Netbird configuration
+      netbird_enroll_key: "KEY-FROM-NETBIRD"
+      netbird_role: client
+      netbird_server_url: "https://vpn.example.com"
+      netbird_firewall_backend: auto
+      netbird_enable_peer_ssh: false
+      netbird_manage_host_ssh: false
+      netbird_manage_host_dns: true
   vars:
     ## These vars will be applied to all hosts in this list.
     #  Values can be overwritten in other groups below
