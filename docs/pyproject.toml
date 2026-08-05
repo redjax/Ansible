@@ -9,5 +9,5 @@ dependencies = [
     "mkdocs-literate-nav>=0.6.2",
     "mkdocs-material>=9.7.1",
     "mkdocs-section-index>=0.3.10",
-    "pymdown-extensions>=10.19.1",
+    "pymdown-extensions>=11.0",
 ]
