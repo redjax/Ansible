@@ -175,10 +175,10 @@
         name: my.homelab.docker
         tasks_from: enable-systemd-service.yml
 
-    - name: "Fix UFW Docker vulnerability"
-      ansible.builtin.import_role:
-        name: my.homelab.docker
-        tasks_from: fix-ufw-vuln.yml
+#     - name: "Fix UFW Docker vulnerability"
+#       ansible.builtin.import_role:
+#         name: my.homelab.docker
+#         tasks_from: fix-ufw-vuln.yml
 
     - name: "Enable Docker Bash completions"
       ansible.builtin.import_role:
