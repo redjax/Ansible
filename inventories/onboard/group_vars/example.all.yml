@@ -41,3 +41,17 @@ common_debian_packages:
   ]
 
 common_redhat_packages: []
+
+#######
+# Git #
+#######
+
+git_default_branch_name: "main"
+git_user_name: "git-username"
+git_user_email: "your.git.email@domain.com"
+
+##########
+# Docker #
+##########
+
+do_docker_install: false
