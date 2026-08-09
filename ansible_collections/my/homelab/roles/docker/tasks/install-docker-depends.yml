@@ -1,29 +1,16 @@
 ---
-- name: "Ensure required packages for Docker installation are installed (Debian)"
+- name: "Install Docker dependencies (Debian)"
   ansible.builtin.apt:
     name:
       - ca-certificates
       - curl
       - gnupg
+      - python3-debian
     state: present
-    update_cache: yes
+    update_cache: true
   become: true
-  when: 
+  when:
     - ansible_facts['os_family'] == 'Debian'
-    ## Skip extra deps on Debian 13
-    - ansible_distribution_release != 'trixie'
-
-- name: "Minimal Docker dependencies for Debian 13 (Trixie)"
-  ansible.builtin.apt:
-    name:
-      - ca-certificates
-      - curl
-      - gnupg
-    state: present
-  become: true
-  when: 
-    - ansible_facts['os_family'] == 'Debian'
-    - ansible_distribution_release == 'trixie'
 
 - name: "Install Docker dependencies (RHEL/CentOS/Fedora)"
   ansible.builtin.package:
@@ -34,4 +21,5 @@
       - lvm2
     state: present
   become: true
-  when: ansible_facts['os_family'] == 'RedHat'
+  when:
+    - ansible_facts['os_family'] == 'RedHat'

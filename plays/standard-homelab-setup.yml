@@ -1,6 +1,7 @@
 ---
 ## This is the standard setup I do on any new machines in my homelab
-#  Meant to be run after initial onboarding playbook
+## Meant to be run after initial onboarding playbook
+
 - name: Standard homelab setup
   hosts: all
 
@@ -11,9 +12,9 @@
 
     ## Replace 'master' with 'main' (or another branch name)
     git_default_branch: "{{ git_default_branch_name }}"
+
     ## Git username for git config user.name
     git_user: "{{ git_user_name }}"
-    ## Git email for git config user.email
     git_email: "{{ git_user_email }}"
 
     ## Install Docker Compose
@@ -24,6 +25,9 @@
     new_user_shell: "{{ setup_user_shell | default('/bin/bash') }}"
     allow_passwordless_sudo: "{{ setup_user_passwordless_sudo | default(false) }}"
 
+    ## Install & configure Docker
+    do_docker_install: false
+
   tasks:
     ## Gather installed package facts on all remotes
     - name: "Gather facts"
@@ -31,24 +35,25 @@
         manager: auto
 
     ## Setup user account
-    - name: Create new user
+    - name: "Create new user"
       ansible.builtin.import_role:
         name: my.homelab.user_mgmt
         tasks_from: create-user.yml
 
     ## Unattended upgrades on Debian hosts
-    - name: Install & configure unattended-upgrades on Debian hosts
+    - name: "Install & configure unattended-upgrades on Debian hosts"
       ansible.builtin.import_role:
         name: my.homelab.onboard
         tasks_from: install-unattended-upgrades.yml
-      when: ansible_facts.os_family == "Debian"
+      when:
+        - ansible_facts['os_family'] == "Debian"
 
     ## Install & configure git
     - name: "Install & setup git"
       ansible.builtin.import_role:
         name: my.homelab.git
 
-    ## Generate github_id_rsa SSH key
+    ## Generate GitHub SSH key
     - name: "Generate SSH keys"
       ansible.builtin.import_role:
         name: my.homelab.ssh
@@ -59,14 +64,16 @@
       ansible.builtin.import_role:
         name: my.homelab.base_setup
         tasks_from: deb-install-packages.yml
-      when: ansible_facts.os_family == "Debian"
+      when:
+        - ansible_facts['os_family'] == "Debian"
 
     ## Install common RedHat packages
-    - name: "Install base packages for Redhat-based distributions"
+    - name: "Install base packages for RedHat-based distributions"
       ansible.builtin.import_role:
         name: my.homelab.base_setup
         tasks_from: rpm-install-packages.yml
-      when: ansible_facts.os_family == "RedHat"
+      when:
+        - ansible_facts['os_family'] == "RedHat"
 
     ## Install crontab on all hosts
     - name: "Install crontab"
@@ -74,32 +81,36 @@
         name: my.homelab.cron
         tasks_from: install-cron.yml
 
-    ## Install clamAV antivirus
-    - name: "Install clamAV"
+    ## Install ClamAV antivirus
+    - name: "Install ClamAV"
       ansible.builtin.import_role:
         name: my.homelab.security.clamav
-      when: ansible_facts.os_family == "Debian"
+      when:
+        - ansible_facts['os_family'] == "Debian"
 
-    ## Apply default clamAV configuration
-    - name: "Configure clamAV"
+    ## Apply default ClamAV configuration
+    - name: "Configure ClamAV"
       ansible.builtin.import_role:
         name: my.homelab.security.clamav
         tasks_from: configure_clamav.yml
-      when: ansible_facts.os_family == "Debian"
+      when:
+        - ansible_facts['os_family'] == "Debian"
 
-    ## Apply default clamAV scan schedule
-    - name: "Configure clamAV scan schedule"
+    ## Apply default ClamAV scan schedule
+    - name: "Configure ClamAV scan schedule"
       ansible.builtin.import_role:
         name: my.homelab.security.clamav
         tasks_from: configure_scans.yml
-      when: ansible_facts.os_family == "Debian"
+      when:
+        - ansible_facts['os_family'] == "Debian"
 
-    ## Add clamAV systemd service
-    - name: "Setup clamAV systemd service"
+    ## Add ClamAV systemd service
+    - name: "Setup ClamAV systemd service"
       ansible.builtin.import_role:
         name: my.homelab.security.clamav
         tasks_from: restart_clamav_systemd.yml
-      when: ansible_facts.os_family == "Debian"
+      when:
+        - ansible_facts['os_family'] == "Debian"
 
     ## Install fail2ban
     - name: "Install fail2ban"
@@ -119,7 +130,7 @@
         name: my.homelab.security.fail2ban
         tasks_from: install-fail2ban-confs.yml
 
-    ## Enable fail2ban systemd service & start
+    ## Enable & start fail2ban systemd service
     - name: "Enable & start fail2ban"
       ansible.builtin.import_role:
         name: my.homelab.security.fail2ban
@@ -144,51 +155,11 @@
         tasks_from: enable-firewall.yml
 
     ## Install & configure Docker
-    - name: "Add Docker APT repository"
+    - name: "Install & configure Docker"
       ansible.builtin.import_role:
         name: my.homelab.docker
-        tasks_from: add-apt-repository.yml
-
-    - name: "Install Docker packages"
-      ansible.builtin.import_role:
-        name: my.homelab.docker
-        tasks_from: install-docker-depends.yml
-
-    - name: "Install Docker"
-      ansible.builtin.import_role:
-        name: my.homelab.docker
-        tasks_from: install-docker.yml
-    
-    - name: "Install Docker Compose"
-      ansible.builtin.import_role:
-        name: my.homelab.docker
-        tasks_from: install-docker-compose.yml
-      when: install_docker_compose
-
-    - name: "Add user to Docker group"
-      ansible.builtin.import_role:
-        name: my.homelab.docker
-        tasks_from: add-user-to-docker-group.yml
-
-    - name: "Enable Docker systemd service"
-      ansible.builtin.import_role:
-        name: my.homelab.docker
-        tasks_from: enable-systemd-service.yml
-
-#     - name: "Fix UFW Docker vulnerability"
-#       ansible.builtin.import_role:
-#         name: my.homelab.docker
-#         tasks_from: fix-ufw-vuln.yml
-
-    - name: "Enable Docker Bash completions"
-      ansible.builtin.import_role:
-        name: my.homelab.docker
-        tasks_from: enable-bash-completions.yml
-
-    - name: "Debug Docker version"
-      ansible.builtin.import_role:
-        name: my.homelab.docker
-        tasks_from: debug-docker-version.yml
+      when:
+        - do_docker_install | bool
 
     ## Do updates and reboot if needed
     - name: "Call homelab collection's update-system role"
