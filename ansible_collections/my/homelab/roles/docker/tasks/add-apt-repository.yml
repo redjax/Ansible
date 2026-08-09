@@ -1,46 +1,35 @@
 ---
-- name: Ensure APT keyrings directory exists
-  ansible.builtin.file:
-    path: /etc/apt/keyrings
-    state: directory
-    mode: '0755'
-  become: true
-
-- name: Set Docker repo OS (ubuntu or debian)
-  ansible.builtin.set_fact:
-    docker_repo_os: >-
-      {{
-        'ubuntu' if ansible_facts['distribution'] in ['Ubuntu', 'Linux Mint', 'Pop!_OS']
-        else 'debian'
-      }}
-
-- name: Download Docker GPG key
-  ansible.builtin.get_url:
-    url: "https://download.docker.com/linux/{{ docker_repo_os }}/gpg"
-    dest: /etc/apt/keyrings/docker.asc
-    mode: '0644'
-  become: true
-
-- name: Set architecture for Docker repo
-  ansible.builtin.set_fact:
-    docker_arch: >-
-      {{
-        ansible_facts['architecture']
-        | lower
-        | replace('x86_64', 'amd64')
-        | replace('aarch64', 'arm64')
-        | replace('armv7l', 'armhf')
-      }}
-
-- name: Add Docker APT repository
-  ansible.builtin.apt_repository:
-    repo: >-
-      deb [arch={{ docker_arch }} signed-by=/etc/apt/keyrings/docker.asc]
-      https://download.docker.com/linux/{{ docker_repo_os }}
-      {{ ansible_facts['distribution_release'] }}
-      stable
+- name: "Add Docker APT repository"
+  ansible.builtin.deb822_repository:
+    name: docker
+    types:
+      - deb
+    uris:
+      - https://download.docker.com/linux/debian
+    suites:
+      - "{{ ansible_facts['distribution_release'] }}"
+    components:
+      - stable
+    architectures:
+      - "{{ dpkg_architecture }}"
+    signed_by: https://download.docker.com/linux/debian/gpg
     state: present
-    filename: docker
+  vars:
+    dpkg_architecture: >-
+      {{
+        {
+          'x86_64': 'amd64',
+          'aarch64': 'arm64',
+          'arm64': 'arm64'
+        }.get(
+          ansible_facts['architecture'] | lower,
+          ansible_facts['architecture'] | lower
+        )
+      }}
+  become: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: "Update APT cache"
+  ansible.builtin.apt:
     update_cache: true
   become: true
-
