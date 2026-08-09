@@ -1,7 +1,7 @@
 ---
 - name: "UWF allow TCP ports"
   community.general.ufw:
-    policy: allow
+    rule: allow
     port: "{{ item }}"
     proto: tcp
   become: true
@@ -10,7 +10,7 @@
 
 - name: "UWF allow UDP ports"
   community.general.ufw:
-    policy: allow
+    rule: allow
     port: "{{ item }}"
     proto: udp
   become: true
