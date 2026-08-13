@@ -1,13 +1,13 @@
 [tools]
 ## https://mise-tools.jdx.dev/tools/python
-python = "3.12"
+python = "3.14.7"
 ## https://mise-tools.jdx.dev/tools/pipx
 "aqua:pypa/pipx" = "latest"
 ## https://mise-tools.jdx.dev/tools/uv
 uv = "latest"
 
 ## https://mise-tools.jdx.dev/tools/ansible
-ansible = "13.1.0"
+ansible = "13.8.0"
 
 ## https://mise-tools.jdx.dev/tools/direnv
 direnv = "latest"
