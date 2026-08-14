@@ -1,0 +1,4 @@
+# name|ipv4-url|ipv6-url
+{% for feed in firewall_ipset_feeds if feed.enabled | default(true) %}
+{{ feed.name }}|{{ feed.ipv4_url | default('') }}|{{ feed.ipv6_url | default('') }}
+{% endfor %}

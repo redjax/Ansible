@@ -11,3 +11,40 @@ firewalld_allow_ports: []
 ufw_disallow_tcp_ports: []
 ufw_disallow_udp_ports: []
 firewalld_disallow_ports: []
+
+###################
+# ipsets blocking #
+###################
+
+firewall_ipset_enabled: false
+firewall_ipset_firewalld_enabled: false
+
+firewall_ipset_config_dir: /etc/firewall-ipset
+firewall_ipset_script_path: /usr/local/sbin/firewall-ipset-refresh
+firewall_ipset_state_file: /etc/firewall-ipset/ipsets.save
+
+firewall_ipset_restore_service_name: firewall-ipset-restore
+firewall_ipset_refresh_service_name: firewall-ipset-refresh
+firewall_ipset_timer_name: firewall-ipset-refresh
+
+## Download timeout in seconds.
+firewall_ipset_download_timeout: 30
+
+## Refresh shortly after boot, then weekly.
+firewall_ipset_timer_on_boot_sec: 2min
+firewall_ipset_timer_on_unit_active_sec: 1w
+firewall_ipset_timer_randomized_delay_sec: 30min
+
+## Remote feeds containing one CIDR per line.
+#  A feed can specify IPv4, IPv6, or both.
+#
+# Example:
+#
+# firewall_ipset_feeds:
+#   - name: geo_indonesia
+#     enabled: true
+#     action: DROP
+#     ipv4_url: "https://www.ipdeny.com/ipblocks/data/aggregated/id-aggregated.zone"
+#     ipv6_url: "https://www.ipdeny.com/ipv6/ipaddresses/blocks/id.zone"
+
+firewall_ipset_feeds: []

@@ -1,0 +1,47 @@
+---
+- name: Assert IP-set feeds were configured
+  ansible.builtin.assert:
+    that:
+      - firewall_ipset_enabled | bool
+      - firewall_ipset_feeds | length > 0
+    fail_msg: >-
+      Set firewall_ipset_enabled: true and declare at least one
+      firewall_ipset_feeds entry.
+
+- name: Validate IP-set feed declarations
+  ansible.builtin.assert:
+    that:
+      - item.name is match('^[a-zA-Z][a-zA-Z0-9_-]{0,30}$')
+      - item.ipv4_url is defined or item.ipv6_url is defined
+      - item.action | default('DROP') | upper == "DROP"
+    fail_msg: "Invalid firewall_ipset_feeds entry: {{ item | to_nice_json }}"
+  loop: "{{ firewall_ipset_feeds }}"
+  loop_control:
+    label: "{{ item.name | default('unnamed') }}"
+  when: item.enabled | default(true) | bool
+
+- name: Configure UFW-backed IP sets
+  ansible.builtin.include_tasks: configure-ipset-ufw.yml
+  when: ansible_facts.os_family == "Debian"
+
+- name: Configure firewalld-backed IP sets
+  ansible.builtin.include_tasks: configure-ipset-firewalld.yml
+  when:
+    - ansible_facts.os_family == "RedHat"
+    - firewall_ipset_firewalld_enabled | bool
+
+- name: Fail for unsupported operating-system family
+  ansible.builtin.fail:
+    msg: >-
+      IP-set configuration supports Debian/UFW and RedHat/firewalld only.
+      Detected os_family={{ ansible_facts.os_family }}.
+  when: ansible_facts.os_family not in ["Debian", "RedHat"]
+
+- name: Fail when firewalld IP-set support was not opted in
+  ansible.builtin.fail:
+    msg: >-
+      Set firewall_ipset_firewalld_enabled: true to configure IP sets
+      on this RedHat/firewalld host.
+  when:
+    - ansible_facts.os_family == "RedHat"
+    - not firewall_ipset_firewalld_enabled | bool

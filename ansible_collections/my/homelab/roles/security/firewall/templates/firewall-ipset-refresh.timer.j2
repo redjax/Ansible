@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodic refresh of firewall IP-set feeds
+
+[Timer]
+OnBootSec={{ firewall_ipset_timer_on_boot_sec }}
+OnUnitActiveSec={{ firewall_ipset_timer_on_unit_active_sec }}
+RandomizedDelaySec={{ firewall_ipset_timer_randomized_delay_sec }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

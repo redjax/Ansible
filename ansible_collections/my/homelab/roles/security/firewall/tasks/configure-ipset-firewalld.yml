@@ -1,0 +1,127 @@
+---
+- name: Assert firewalld and curl are available
+  ansible.builtin.assert:
+    that:
+      - "'firewalld' in ansible_facts.packages"
+      - "'curl' in ansible_facts.packages"
+    fail_msg: >-
+      Firewalld IP-set configuration requires firewalld and curl.
+      Run the IP-set installation tasks first.
+
+- name: Ensure firewalld is enabled and started
+  ansible.builtin.service:
+    name: firewalld
+    enabled: true
+    state: started
+  become: true
+
+- name: Create firewalld IP-set configuration directory
+  ansible.builtin.file:
+    path: "{{ firewall_ipset_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  become: true
+
+- name: Render IP-set feed manifest
+  ansible.builtin.template:
+    src: firewall-ipset-feeds.conf.j2
+    dest: "{{ firewall_ipset_config_dir }}/feeds.conf"
+    owner: root
+    group: root
+    mode: "0600"
+  become: true
+
+- name: Render firewalld IP-set refresh script
+  ansible.builtin.template:
+    src: firewall-ipset-firewalld-refresh.sh.j2
+    dest: "{{ firewall_ipset_script_path }}-firewalld"
+    owner: root
+    group: root
+    mode: "0750"
+  become: true
+
+- name: Render firewalld IP-set refresh service
+  ansible.builtin.template:
+    src: firewall-ipset-firewalld-refresh.service.j2
+    dest: "/etc/systemd/system/{{ firewall_ipset_refresh_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Render firewalld IP-set refresh timer
+  ansible.builtin.template:
+    src: firewall-ipset-refresh.timer.j2
+    dest: "/etc/systemd/system/{{ firewall_ipset_timer_name }}.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Apply pending systemd unit changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Refresh firewalld IP sets before creating source bindings
+  ansible.builtin.command:
+    cmd: "{{ firewall_ipset_script_path }}-firewalld"
+  become: true
+  changed_when: true
+
+- name: Query permanent firewalld drop-zone sources
+  ansible.builtin.command:
+    argv:
+      - firewall-cmd
+      - --permanent
+      - --zone=drop
+      - --list-sources
+  become: true
+  changed_when: false
+  register: firewall_ipset_drop_sources
+
+- name: Bind IPv4 IP sets to firewalld drop zone
+  ansible.builtin.command:
+    argv:
+      - firewall-cmd
+      - --permanent
+      - --zone=drop
+      - --add-source=ipset:{{ item.name }}_v4
+  become: true
+  loop: "{{ firewall_ipset_feeds }}"
+  loop_control:
+    label: "{{ item.name }}_v4"
+  when:
+    - item.enabled | default(true) | bool
+    - item.ipv4_url | default('') | length > 0
+    - "'ipset:' ~ item.name ~ '_v4' not in firewall_ipset_drop_sources.stdout.split()"
+  notify: Reload firewalld
+
+- name: Bind IPv6 IP sets to firewalld drop zone
+  ansible.builtin.command:
+    argv:
+      - firewall-cmd
+      - --permanent
+      - --zone=drop
+      - --add-source=ipset:{{ item.name }}_v6
+  become: true
+  loop: "{{ firewall_ipset_feeds }}"
+  loop_control:
+    label: "{{ item.name }}_v6"
+  when:
+    - item.enabled | default(true) | bool
+    - item.ipv6_url | default('') | length > 0
+    - "'ipset:' ~ item.name ~ '_v6' not in firewall_ipset_drop_sources.stdout.split()"
+  notify: Reload firewalld
+
+- name: Reload firewalld now that IP sets are bound
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable firewalld IP-set refresh timer
+  ansible.builtin.systemd:
+    name: "{{ firewall_ipset_timer_name }}.timer"
+    enabled: true
+    state: started
+  become: true

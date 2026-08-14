@@ -153,3 +153,24 @@ netbird_firewall_backend: auto
 
 netbird_manage_host_ssh: false
 netbird_manage_host_dns: false
+
+##########
+# IPSets #
+##########
+firewall_ipset_enabled: false
+firewall_ipset_firewalld_enabled: false
+
+firewall_ipset_feeds: []
+# Example:
+#
+# firewall_ipset_feeds:
+#   - name: geo_china
+#     enabled: true
+#     action: DROP
+#     ipv4_url: "https://www.ipdeny.com/ipblocks/data/aggregated/cn-aggregated.zone"
+#     ipv6_url: "https://www.ipdeny.com/ipv6/ipaddresses/aggregated/cn-aggregated.zone"
+#   - name: geo_russia
+#     enabled: true
+#     action: DROP
+#     ipv4_url: "https://www.ipdeny.com/ipblocks/data/aggregated/ru-aggregated.zone"
+#     ipv6_url: "https://www.ipdeny.com/ipv6/ipaddresses/aggregated/ru-aggregated.zone"

@@ -1,0 +1,10 @@
+---
+- name: Refresh firewall IP sets
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Refresh remote IP-set feeds
+      ansible.builtin.import_role:
+        name: my.homelab.security.firewall
+        tasks_from: refresh-ipset.yml

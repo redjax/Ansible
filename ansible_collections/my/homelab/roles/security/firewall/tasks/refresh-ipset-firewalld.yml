@@ -1,0 +1,13 @@
+---
+- name: Assert firewalld IP-set refresh prerequisites
+  ansible.builtin.assert:
+    that:
+      - "'firewalld' in ansible_facts.packages"
+      - "'curl' in ansible_facts.packages"
+    fail_msg: "Firewalld IP-set refresh requires firewalld and curl."
+
+- name: Refresh remote firewalld IP-set feeds
+  ansible.builtin.command:
+    cmd: "{{ firewall_ipset_script_path }}-firewalld"
+  become: true
+  changed_when: true

@@ -1,0 +1,14 @@
+---
+- name: Install IP-set dependencies
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Gather facts
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: Install IP-set dependencies
+      ansible.builtin.import_role:
+        name: my.homelab.security.firewall
+        tasks_from: install-ipset.yml

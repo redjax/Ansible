@@ -1,2 +1,11 @@
 ---
 # handlers file for roles/security/install-firewall
+- name: Reload ufw
+  community.general.ufw:
+    state: reloaded
+  become: true
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true

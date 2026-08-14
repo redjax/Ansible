@@ -1,0 +1,14 @@
+---
+- name: Install and configure UFW IP sets
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Gather facts
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: Install and configure IP sets
+      ansible.builtin.import_role:
+        name: my.homelab.security.firewall
+        tasks_from: ipset.yml

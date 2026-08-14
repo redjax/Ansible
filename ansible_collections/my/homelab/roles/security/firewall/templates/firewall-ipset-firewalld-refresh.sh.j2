@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+readonly CONFIG_FILE="{{ firewall_ipset_config_dir }}/feeds.conf"
+readonly WORK_DIR="$(mktemp -d)"
+readonly CURL_TIMEOUT="{{ firewall_ipset_download_timeout }}"
+
+cleanup() {
+  rm -rf "${WORK_DIR}"
+}
+trap cleanup EXIT
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "Required command not found: $1" >&2
+    exit 1
+  }
+}
+
+download_and_validate() {
+  local family="$1"
+  local url="$2"
+  local output="$3"
+
+  curl \
+    --fail \
+    --location \
+    --silent \
+    --show-error \
+    --connect-timeout "${CURL_TIMEOUT}" \
+    --max-time "${CURL_TIMEOUT}" \
+    "${url}" \
+    -o "${output}.raw"
+
+  case "${family}" in
+    v4)
+      sed -E \
+        -e 's/\r$//' \
+        -e 's/^[[:space:]]+//' \
+        -e 's/[[:space:]]+$//' \
+        -e '/^$/d' \
+        "${output}.raw" \
+        | grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[12][0-9]|3[0-2])$' \
+        | sort -u > "${output}"
+      ;;
+    v6)
+      sed -E \
+        -e 's/\r$//' \
+        -e 's/^[[:space:]]+//' \
+        -e 's/[[:space:]]+$//' \
+        -e '/^$/d' \
+        "${output}.raw" \
+        | grep -E '^[0-9A-Fa-f:]+/([0-9]|[1-9][0-9]|1[01][0-9]|12[0-8])$' \
+        | sort -u > "${output}"
+      ;;
+  esac
+
+  [[ -s "${output}" ]] || {
+    echo "Validated ${family} feed is empty: ${url}" >&2
+    return 1
+  }
+}
+
+replace_set() {
+  local set_name="$1"
+  local family="$2"
+  local entries_file="$3"
+
+  firewall-cmd --permanent --delete-ipset="${set_name}" 2>/dev/null || true
+  firewall-cmd --permanent --new-ipset="${set_name}" --type=hash:net \
+    --option=family="$([[ "${family}" == "v4" ]] && echo inet || echo inet6)"
+
+  while IFS= read -r cidr; do
+    firewall-cmd --permanent --ipset="${set_name}" --add-entry="${cidr}"
+  done < "${entries_file}"
+}
+
+require_command curl
+require_command firewall-cmd
+
+while IFS='|' read -r name ipv4_url ipv6_url; do
+  [[ -z "${name}" || "${name}" =~ ^# ]] && continue
+
+  if [[ -n "${ipv4_url}" ]]; then
+    output="${WORK_DIR}/${name}_v4"
+    download_and_validate v4 "${ipv4_url}" "${output}"
+    replace_set "${name}_v4" v4 "${output}"
+  fi
+
+  if [[ -n "${ipv6_url}" ]]; then
+    output="${WORK_DIR}/${name}_v6"
+    download_and_validate v6 "${ipv6_url}" "${output}"
+    replace_set "${name}_v6" v6 "${output}"
+  fi
+done < "${CONFIG_FILE}"
+
+firewall-cmd --reload
