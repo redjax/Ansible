@@ -7,7 +7,7 @@ python = "3.14.7"
 uv = "latest"
 
 ## https://mise-tools.jdx.dev/tools/ansible
-ansible = "14.3.0"
+ansible = "14.3.1"
 
 ## https://mise-tools.jdx.dev/tools/direnv
 direnv = "latest"
