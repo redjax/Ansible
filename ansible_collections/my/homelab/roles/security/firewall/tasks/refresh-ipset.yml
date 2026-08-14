@@ -1,6 +1,23 @@
 ---
-- name: Refresh remote IP-set feeds
-  ansible.builtin.command:
-    cmd: "{{ firewall_ipset_script_path }}"
-  become: true
-  changed_when: true
+- name: Assert IP-set refresh is enabled
+  ansible.builtin.assert:
+    that:
+      - firewall_ipset_enabled | bool
+    fail_msg: "Set firewall_ipset_enabled: true before refreshing IP sets."
+
+- name: Refresh UFW IP sets
+  ansible.builtin.include_tasks: refresh-ipset-ufw.yml
+  when: ansible_facts.os_family == "Debian"
+
+- name: Refresh firewalld IP sets
+  ansible.builtin.include_tasks: refresh-ipset-firewalld.yml
+  when:
+    - ansible_facts.os_family == "RedHat"
+    - firewall_ipset_firewalld_enabled | bool
+
+- name: Fail when firewalld refresh was not opted in
+  ansible.builtin.fail:
+    msg: "Set firewall_ipset_firewalld_enabled: true before refreshing firewalld IP sets."
+  when:
+    - ansible_facts.os_family == "RedHat"
+    - not firewall_ipset_firewalld_enabled | bool

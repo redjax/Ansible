@@ -1,8 +1,29 @@
 ---
-- name: Install IP-set runtime dependencies
+- name: Install IP-set dependencies on Debian-family systems
   ansible.builtin.package:
     name:
       - ipset
       - curl
     state: present
   become: true
+  when: ansible_facts.os_family == "Debian"
+
+- name: Install firewalld IP-set dependencies on Red Hat-family systems
+  ansible.builtin.package:
+    name:
+      - firewalld
+      - curl
+    state: present
+  become: true
+  when: ansible_facts.os_family == "RedHat"
+
+- name: Fail for unsupported operating-system family
+  ansible.builtin.fail:
+    msg: >-
+      IP-set configuration supports Debian/UFW and RedHat/firewalld only.
+      Detected os_family={{ ansible_facts.os_family }}.
+  when: ansible_facts.os_family not in ["Debian", "RedHat"]
+
+- name: Refresh package facts after installation
+  ansible.builtin.package_facts:
+    manager: auto

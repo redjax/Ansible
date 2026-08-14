@@ -17,6 +17,7 @@ firewalld_disallow_ports: []
 ###################
 
 firewall_ipset_enabled: false
+firewall_ipset_firewalld_enabled: false
 
 firewall_ipset_config_dir: /etc/firewall-ipset
 firewall_ipset_script_path: /usr/local/sbin/firewall-ipset-refresh

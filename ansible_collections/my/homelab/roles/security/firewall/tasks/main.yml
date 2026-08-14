@@ -1,15 +1,12 @@
 ---
 # tasks file for roles/security/install-firewall
-- name: "Gather the package facts"
+- name: Gather package facts
   ansible.builtin.package_facts:
     manager: auto
 
-- name: "Install firewall"
+- name: Install firewall
   ansible.builtin.include_tasks: install-firewall.yml
-  when: ansible_facts['os_family'] == "Debian"
 
-- name: Configure optional UFW IP sets
-  ansible.builtin.include_tasks: configure-ipset.yml
-  when:
-    - firewall_ipset_enabled | bool
-    - ansible_facts.os_family == "Debian"
+- name: Configure optional IP sets
+  ansible.builtin.include_tasks: ipset.yml
+  when: firewall_ipset_enabled | bool

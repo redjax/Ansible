@@ -1,0 +1,15 @@
+---
+- name: Assert IP-set refresh prerequisites
+  ansible.builtin.assert:
+    that:
+      - firewall_ipset_enabled | bool
+      - ansible_facts.os_family == "Debian"
+      - "'ipset' in ansible_facts.packages"
+      - "'curl' in ansible_facts.packages"
+    fail_msg: "IP-set refresh requires an installed Debian/UFW IP-set configuration."
+
+- name: Refresh remote firewall IP-set feeds
+  ansible.builtin.command:
+    cmd: "{{ firewall_ipset_script_path }}"
+  become: true
+  changed_when: true
