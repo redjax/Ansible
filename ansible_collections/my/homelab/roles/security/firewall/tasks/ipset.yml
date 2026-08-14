@@ -1,0 +1,6 @@
+---
+- name: Install IP-set dependencies
+  ansible.builtin.include_tasks: install-ipset.yml
+
+- name: Configure IP-set feeds and UFW integration
+  ansible.builtin.include_tasks: configure-ipset.yml

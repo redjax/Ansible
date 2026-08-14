@@ -1,0 +1,8 @@
+---
+- name: Install IP-set runtime dependencies
+  ansible.builtin.package:
+    name:
+      - ipset
+      - curl
+    state: present
+  become: true

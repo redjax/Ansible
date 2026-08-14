@@ -1,0 +1,14 @@
+---
+- name: Configure UFW IP-set feeds and rules
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Gather facts
+      ansible.builtin.import_role:
+        name: my.homelab.facts
+
+    - name: Configure remote-managed IP sets
+      ansible.builtin.import_role:
+        name: my.homelab.security.firewall
+        tasks_from: configure-ipset.yml

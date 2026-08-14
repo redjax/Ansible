@@ -7,3 +7,9 @@
 - name: "Install firewall"
   ansible.builtin.include_tasks: install-firewall.yml
   when: ansible_facts['os_family'] == "Debian"
+
+- name: Configure optional UFW IP sets
+  ansible.builtin.include_tasks: configure-ipset.yml
+  when:
+    - firewall_ipset_enabled | bool
+    - ansible_facts.os_family == "Debian"

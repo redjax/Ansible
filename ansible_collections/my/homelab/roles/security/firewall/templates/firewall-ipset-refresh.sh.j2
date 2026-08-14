@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+readonly CONFIG_FILE="{{ firewall_ipset_config_dir }}/feeds.conf"
+readonly STATE_FILE="{{ firewall_ipset_state_file }}"
+readonly WORK_DIR="$(mktemp -d)"
+readonly CURL_TIMEOUT="{{ firewall_ipset_download_timeout }}"
+
+cleanup() {
+  rm -rf "${WORK_DIR}"
+}
+trap cleanup EXIT
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "Required command not found: $1" >&2
+    exit 1
+  }
+}
+
+validate_name() {
+  [[ "$1" =~ ^[a-zA-Z][a-zA-Z0-9_-]{0,30}$ ]]
+}
+
+download_and_build() {
+  local name="$1"
+  local family="$2"
+  local url="$3"
+  local live_set="${name}_${family}"
+  local next_set="${live_set}_next"
+  local input_file="${WORK_DIR}/${live_set}.txt"
+  local restore_file="${WORK_DIR}/${live_set}.restore"
+
+  [[ -z "${url}" ]] && return 0
+
+  curl \
+    --fail \
+    --location \
+    --silent \
+    --show-error \
+    --connect-timeout "${CURL_TIMEOUT}" \
+    --max-time "{{ firewall_ipset_download_timeout }}" \
+    "${url}" \
+    -o "${input_file}"
+
+  case "${family}" in
+    v4)
+      grep -E '^[[:space:]]*([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}[[:space:]]*$' "${input_file}" \
+        | tr -d '[:space:]' \
+        | sort -u > "${input_file}.validated"
+      ;;
+    v6)
+      grep -E '^[[:space:]]*[0-9A-Fa-f:]+/[0-9]{1,3}[[:space:]]*$' "${input_file}" \
+        | tr -d '[:space:]' \
+        | sort -u > "${input_file}.validated"
+      ;;
+  esac
+
+  [[ -s "${input_file}.validated" ]] || {
+    echo "Refusing to replace ${live_set}: validated feed is empty" >&2
+    return 1
+  }
+
+  {
+    printf 'create %s hash:net family %s hashsize 4096 maxelem 262144 -exist\n' \
+      "${next_set}" "$([[ "${family}" == "v4" ]] && echo inet || echo inet6)"
+    printf 'flush %s\n' "${next_set}"
+    sed "s/^/add ${next_set} /" "${input_file}.validated"
+  } > "${restore_file}"
+
+  ipset restore -exist -file "${restore_file}"
+
+  ipset create "${live_set}" hash:net \
+    family "$([[ "${family}" == "v4" ]] && echo inet || echo inet6)" \
+    hashsize 4096 maxelem 262144 -exist
+
+  ipset swap "${live_set}" "${next_set}"
+  ipset destroy "${next_set}"
+}
+
+require_command curl
+require_command ipset
+
+while IFS='|' read -r name ipv4_url ipv6_url; do
+  [[ -z "${name}" || "${name}" =~ ^# ]] && continue
+  validate_name "${name}" || {
+    echo "Invalid set name in manifest: ${name}" >&2
+    exit 1
+  }
+
+  download_and_build "${name}" v4 "${ipv4_url}"
+  download_and_build "${name}" v6 "${ipv6_url}"
+done < "${CONFIG_FILE}"
+
+ipset save > "${STATE_FILE}"

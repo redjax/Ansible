@@ -1,0 +1,6 @@
+---
+- name: Refresh remote IP-set feeds
+  ansible.builtin.command:
+    cmd: "{{ firewall_ipset_script_path }}"
+  become: true
+  changed_when: true

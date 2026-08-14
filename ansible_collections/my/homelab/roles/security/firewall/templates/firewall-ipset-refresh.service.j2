@@ -1,0 +1,9 @@
+[Unit]
+Description=Refresh firewall IP-set feeds
+Wants=network-online.target
+After=network-online.target
+Before=ufw.service
+
+[Service]
+Type=oneshot
+ExecStart={{ firewall_ipset_script_path }}

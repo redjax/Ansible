@@ -1,0 +1,117 @@
+---
+- name: Validate IP-set feed names
+  ansible.builtin.assert:
+    that:
+      - item.name is match('^[a-zA-Z][a-zA-Z0-9_-]{0,30}$')
+      - item.ipv4_url is defined or item.ipv6_url is defined
+    fail_msg: "Invalid firewall_ipset_feeds entry: {{ item | to_nice_json }}"
+  loop: "{{ firewall_ipset_feeds }}"
+  when: item.enabled | default(true) | bool
+
+- name: Create firewall IP-set configuration directory
+  ansible.builtin.file:
+    path: "{{ firewall_ipset_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  become: true
+
+- name: Render firewall IP-set feed configuration
+  ansible.builtin.template:
+    src: firewall-ipset-feeds.conf.j2
+    dest: "{{ firewall_ipset_config_dir }}/feeds.conf"
+    owner: root
+    group: root
+    mode: "0600"
+  become: true
+
+- name: Render firewall IP-set refresh script
+  ansible.builtin.template:
+    src: firewall-ipset-refresh.sh.j2
+    dest: "{{ firewall_ipset_script_path }}"
+    owner: root
+    group: root
+    mode: "0750"
+  become: true
+
+- name: Render firewall IP-set restore service
+  ansible.builtin.template:
+    src: firewall-ipset-restore.service.j2
+    dest: "/etc/systemd/system/{{ firewall_ipset_restore_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Render firewall IP-set refresh service
+  ansible.builtin.template:
+    src: firewall-ipset-refresh.service.j2
+    dest: "/etc/systemd/system/{{ firewall_ipset_refresh_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Render firewall IP-set refresh timer
+  ansible.builtin.template:
+    src: firewall-ipset-refresh.timer.j2
+    dest: "/etc/systemd/system/{{ firewall_ipset_timer_name }}.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+# Must happen before UFW receives rules that use *_v4 / *_v6.
+- name: Populate IP sets before UFW references them
+  ansible.builtin.command:
+    cmd: "{{ firewall_ipset_script_path }}"
+  become: true
+  changed_when: true
+
+- name: Configure UFW IPv4 IP-set drop rules
+  ansible.builtin.blockinfile:
+    path: /etc/ufw/before.rules
+    marker: "# {mark} ANSIBLE MANAGED FIREWALL IPSETS"
+    insertbefore: "^COMMIT$"
+    block: |
+      {% for feed in firewall_ipset_feeds if feed.enabled | default(true) %}
+      {% if feed.ipv4_url | default('') | length > 0 %}
+      -A ufw-before-input -m set --match-set {{ feed.name }}_v4 src -j {{ feed.action | default('DROP') | upper }}
+      {% endif %}
+      {% endfor %}
+  become: true
+  notify: Reload ufw
+
+- name: Configure UFW IPv6 IP-set drop rules
+  ansible.builtin.blockinfile:
+    path: /etc/ufw/before6.rules
+    marker: "# {mark} ANSIBLE MANAGED FIREWALL IPSETS"
+    insertbefore: "^COMMIT$"
+    block: |
+      {% for feed in firewall_ipset_feeds if feed.enabled | default(true) %}
+      {% if feed.ipv6_url | default('') | length > 0 %}
+      -A ufw6-before-input -m set --match-set {{ feed.name }}_v6 src -j {{ feed.action | default('DROP') | upper }}
+      {% endif %}
+      {% endfor %}
+  become: true
+  notify: Reload ufw
+
+- name: Enable firewall IP-set restore service
+  ansible.builtin.systemd:
+    name: "{{ firewall_ipset_restore_service_name }}.service"
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+
+- name: Enable firewall IP-set refresh timer
+  ansible.builtin.systemd:
+    name: "{{ firewall_ipset_timer_name }}.timer"
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
