@@ -7,9 +7,11 @@
 - name: "Install OpenSSH server & dependencies"
   ansible.builtin.include_tasks: install-dependencies.yml
 
+- name: Configure SSH
+  ansible.builtin.include_tasks: configure-ssh.yml
+
 - name: "Create .ssh directory"
   ansible.builtin.include_tasks: create-ssh-dir.yml
 
 - name: "Generate SSH keypair"
   ansible.builtin.include_tasks: generate-ssh-key.yml
-
