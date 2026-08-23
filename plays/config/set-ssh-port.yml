@@ -1,0 +1,12 @@
+---
+- name: Common configurations for Netcup VPSs
+  hosts: all
+
+  vars:
+    sshd_port: "{{ ssh_port | default(22) }}"
+
+  tasks:
+    - name: Configure SSH
+      ansible.builtin.import_role:
+        name: my.homelab.ssh
+        tasks_from: configure-ssh.yml
