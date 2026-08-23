@@ -60,6 +60,7 @@ common_debian_packages:
   [
     "btop",
     "curl",
+    "bzip2",
     "dos2unix",
     "git",
     "htop",
@@ -73,7 +74,21 @@ common_debian_packages:
     "rsync",
   ]
 
-common_redhat_packages: []
+common_redhat_packages:
+  [
+    "btop",
+    "curl",
+    "bzip2",
+    "dos2unix",
+    "git",
+    "htop",
+    "ncdu",
+    "tmux",
+    "unzip",
+    "wget",
+    "zip",
+    "gnupg2",
+  ]
 
 ##########
 # Python #
