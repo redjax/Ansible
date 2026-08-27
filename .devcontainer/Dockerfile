@@ -1,4 +1,4 @@
-ARG UV_VER=0.12.6
+ARG UV_VER=0.12.7
 ARG PYTHON_VER=3.14
 
 FROM python:${PYTHON_VER}-slim AS base
