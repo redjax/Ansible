@@ -6,7 +6,7 @@ backrefs==8.0
     # via mkdocs-material
 certifi==2026.7.22
     # via requests
-charset-normalizer==3.5.1
+charset-normalizer==3.5.2
     # via requests
 click==8.5.0
     # via mkdocs
@@ -31,7 +31,7 @@ markdown==3.11
     #   pymdown-extensions
 markdown-include==0.8.1
     # via docs
-markupsafe==3.0.3
+markupsafe==3.0.4
     # via
     #   jinja2
     #   mkdocs
@@ -64,7 +64,7 @@ paginate==0.5.7
     # via mkdocs-material
 pathspec==1.1.1
     # via mkdocs
-platformdirs==4.12.1
+platformdirs==4.12.3
     # via mkdocs-get-deps
 pygments==2.21.0
     # via mkdocs-material
