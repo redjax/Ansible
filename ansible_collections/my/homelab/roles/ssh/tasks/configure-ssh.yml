@@ -1,4 +1,9 @@
 ---
+- name: Gather installed package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  become: true
+
 - name: Show configured SSH port
   ansible.builtin.debug:
     msg:
@@ -21,6 +26,7 @@
     port: "{{ sshd_port }}"
     proto: tcp
   become: true
+  when: "'ufw' in ansible_facts.packages"
 
 - name: Reload systemd daemon
   ansible.builtin.systemd_service:
