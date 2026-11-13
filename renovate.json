@@ -2,5 +2,16 @@
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
         "github>redjax/PipelineTemplates//config/renovate/default#main"
+    ],
+    "packageRules": [
+        {
+            "matchManagers": [
+                "mise"
+            ],
+            "matchPackageNames": [
+                "python"
+            ],
+            "allowedVersions": "3.13.x"
+        }
     ]
 }
