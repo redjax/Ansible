@@ -4,12 +4,14 @@
     name: python3-apt
     state: present
     update_cache: true
+  become: true
   when: ansible_facts.os_family == "Debian"
 
 - name: "Ensure package facts dependencies are installed on RPM-based systems"
   ansible.builtin.package:
     name: python3-rpm
     state: present
+  become: true
   when: ansible_facts.os_family == "RedHat"
 
 - name: "Gather the package facts"
